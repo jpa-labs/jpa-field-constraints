@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+
+# IDE / Eclipse
+bin/
+out/
+.settings/
+.classpath
+.project
+.factorypath
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# VS Code (optional local config)
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Java / logs
+*.class
+*.log
+hs_err_pid*.log
+
+# Local Gradle properties (may contain tokens)
+gradle.properties.local

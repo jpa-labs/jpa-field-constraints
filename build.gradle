@@ -1,0 +1,80 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+// JitPack artifact: com.github.jpa-labs:uniquefield-spring:TAG (see https://jitpack.io/#jpa-labs/uniquefield-spring)
+// Java packages remain io.github.jpa_labs.uniquefield.*
+group = 'com.github.jpa-labs'
+
+def envVersion = System.getenv('VERSION')
+version = (envVersion != null && !envVersion.isBlank()) ? envVersion.trim() : '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+    }
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.4')
+
+    api 'jakarta.validation:jakarta.validation-api'
+    api 'jakarta.persistence:jakarta.persistence-api'
+
+    implementation 'org.springframework:spring-context'
+    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    testImplementation 'org.springframework.boot:spring-boot-starter-validation'
+    testImplementation 'com.google.testing.compile:compile-testing:0.21.0'
+    testRuntimeOnly 'com.h2database:h2'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            groupId = project.group.toString()
+            artifactId = 'uniquefield-spring'
+            version = project.version.toString()
+            pom {
+                name = 'uniquefield-spring'
+                description =
+                    'JPA-backed Bean Validation @UniqueField / @UniqueFields for Spring Boot (runtime + optional annotation processor).'
+                url = 'https://github.com/jpa-labs/uniquefield-spring'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+            }
+        }
+    }
+    repositories {
+        maven {
+            name = 'GitHubPackages'
+            url = uri('https://maven.pkg.github.com/jpa-labs/uniquefield-spring')
+            credentials {
+                username =
+                    System.getenv('GITHUB_ACTOR')
+                        ?: System.getenv('GITHUB_USERNAME')
+                        ?: (findProperty('gpr.user')?.toString() ?: '')
+                password = System.getenv('GITHUB_TOKEN') ?: (findProperty('gpr.key')?.toString() ?: '')
+            }
+        }
+    }
+}
