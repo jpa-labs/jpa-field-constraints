@@ -1,6 +1,7 @@
 # jpa-field-constraints
 
 [![CI](https://github.com/jpa-labs/jpa-field-constraints/actions/workflows/ci.yml/badge.svg)](https://github.com/jpa-labs/jpa-field-constraints/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/jpa-labs/jpa-field-constraints/branch/main/graph/badge.svg)](https://codecov.io/gh/jpa-labs/jpa-field-constraints)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.0.x-6DB33F)
 ![Java](https://img.shields.io/badge/Java-17-007396)
 
