@@ -64,4 +64,24 @@ class UniqueConstraintAnnotationProcessorTest {
                     """));
     assertThat(compilation).succeeded();
   }
+
+  @Test
+  void failsWhenExistsHasDtoFieldOnField() {
+    Compilation compilation =
+        javac()
+            .withClasspathFrom(UniqueConstraintAnnotationProcessorTest.class.getClassLoader())
+            .withProcessors(new UniqueConstraintAnnotationProcessor())
+            .compile(
+                JavaFileObjects.forSourceString(
+                    "io.github.jpa_labs.uniquefield.ProcessorGenExistsBad",
+                    """
+                    package io.github.jpa_labs.uniquefield;
+                    public class ProcessorGenExistsBad {
+                      @Exists(entity=SampleEntity.class, column="code", dtoField="code")
+                      private String code;
+                    }
+                    """));
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("dtoField must be blank when @Exists");
+  }
 }

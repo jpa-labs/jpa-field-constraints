@@ -4,5 +4,5 @@ import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.context.annotation.Import;
 
 @AutoConfiguration
-@Import({UniqueFieldValidator.class, UniqueFieldsValidator.class})
+@Import({UniqueFieldValidator.class, UniqueFieldsValidator.class, ExistsValidator.class})
 public class UniqueFieldValidationAutoConfiguration {}
