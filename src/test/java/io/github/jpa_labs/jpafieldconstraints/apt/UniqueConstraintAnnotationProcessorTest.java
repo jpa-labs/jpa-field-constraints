@@ -756,4 +756,78 @@ class UniqueConstraintAnnotationProcessorTest {
     assertThat(compilation).failed();
     assertThat(compilation).hadErrorContaining("Unsafe");
   }
+
+  @Test
+  void passesWhenExistsWhereClausesAreValid() {
+    Compilation compilation =
+        javac()
+            .withClasspathFrom(UniqueConstraintAnnotationProcessorTest.class.getClassLoader())
+            .withProcessors(new UniqueConstraintAnnotationProcessor())
+            .compile(
+                JavaFileObjects.forSourceString(
+                    "io.github.jpa_labs.jpafieldconstraints.ProcessorGenExistsWhereGood",
+                    """
+                    package io.github.jpa_labs.jpafieldconstraints;
+                    public class ProcessorGenExistsWhereGood {
+                      @Exists(
+                        entity=SampleEntity.class,
+                        column="code",
+                        where = {
+                          @Exists.Where(column="status", value="ACTIVE"),
+                          @Exists.Where(column="role", value="ADMIN")
+                        }
+                      )
+                      private String code;
+                    }
+                    """));
+    assertThat(compilation).succeeded();
+  }
+
+  @Test
+  void failsWhenExistsWhereColumnIsInvalid() {
+    Compilation compilation =
+        javac()
+            .withClasspathFrom(UniqueConstraintAnnotationProcessorTest.class.getClassLoader())
+            .withProcessors(new UniqueConstraintAnnotationProcessor())
+            .compile(
+                JavaFileObjects.forSourceString(
+                    "io.github.jpa_labs.jpafieldconstraints.ProcessorGenExistsWhereBadColumn",
+                    """
+                    package io.github.jpa_labs.jpafieldconstraints;
+                    public class ProcessorGenExistsWhereBadColumn {
+                      @Exists(
+                        entity=SampleEntity.class,
+                        column="code",
+                        where = { @Exists.Where(column="bad-path", value="ACTIVE") }
+                      )
+                      private String code;
+                    }
+                    """));
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("Invalid where.column");
+  }
+
+  @Test
+  void failsWhenExistsWhereValueIsBlank() {
+    Compilation compilation =
+        javac()
+            .withClasspathFrom(UniqueConstraintAnnotationProcessorTest.class.getClassLoader())
+            .withProcessors(new UniqueConstraintAnnotationProcessor())
+            .compile(
+                JavaFileObjects.forSourceString(
+                    "io.github.jpa_labs.jpafieldconstraints.ProcessorGenExistsWhereBlankValue",
+                    """
+                    package io.github.jpa_labs.jpafieldconstraints;
+                    public class ProcessorGenExistsWhereBlankValue {
+                      @Exists(
+                        entity=SampleEntity.class,
+                        column="code",
+                        where = { @Exists.Where(column="status", value="   ") }
+                      )
+                      private String code;
+                    }
+                    """));
+    assertThat(compilation).failed();
+    assertThat(compilation).hadErrorContaining("where.value must not be blank");
+  }
 }

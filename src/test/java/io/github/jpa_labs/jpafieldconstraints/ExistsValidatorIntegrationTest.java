@@ -88,6 +88,44 @@ class ExistsValidatorIntegrationTest {
     }
 
     @Test
+    void passesWhenWhereClauseCoercesBooleanLiteral() {
+      repository.save(
+          new SampleEntity(null, "emp-boolean", null, null, null, true, null, null, null));
+      Set<ConstraintViolation<EnabledEmployeeDto>> violations =
+          validator.validate(new EnabledEmployeeDto("emp-boolean"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesIntegerLiteral() {
+      repository.save(
+          new SampleEntity(null, "emp-level", null, null, null, null, 3, null, null));
+      Set<ConstraintViolation<LevelEmployeeDto>> violations =
+          validator.validate(new LevelEmployeeDto("emp-level"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesUuidLiteral() {
+      UUID tenant = UUID.fromString("57d2f094-c4fc-4ca5-94cd-3a84f909de4a");
+      repository.save(
+          new SampleEntity(null, "emp-tenant", null, null, null, null, null, tenant, null));
+      Set<ConstraintViolation<TenantEmployeeDto>> violations =
+          validator.validate(new TenantEmployeeDto("emp-tenant"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesEnumLiteral() {
+      repository.save(
+          new SampleEntity(
+              null, "emp-access", null, null, null, null, null, null, SampleEntity.Access.ADMIN));
+      Set<ConstraintViolation<AdminAccessEmployeeDto>> violations =
+          validator.validate(new AdminAccessEmployeeDto("emp-access"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
     void failsWhenEntityColumnPathHasInvalidMidSegmentType() {
       InvalidEntityPathDto dto = new InvalidEntityPathDto("v");
       assertThatThrownBy(() -> validator.validate(dto))
@@ -196,6 +234,74 @@ class ExistsValidatorIntegrationTest {
     private final String code;
 
     ActiveAdminDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class EnabledEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "enabled", value = "true")})
+    private final String code;
+
+    EnabledEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class LevelEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "level", value = "3")})
+    private final String code;
+
+    LevelEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class TenantEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "tenantId", value = "57d2f094-c4fc-4ca5-94cd-3a84f909de4a")})
+    private final String code;
+
+    TenantEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class AdminAccessEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "access", value = "ADMIN")})
+    private final String code;
+
+    AdminAccessEmployeeDto(String code) {
       this.code = code;
     }
 
