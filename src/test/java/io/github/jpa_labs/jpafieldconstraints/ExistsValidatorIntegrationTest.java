@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import java.time.LocalDate;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.jupiter.api.Nested;
@@ -126,6 +127,82 @@ class ExistsValidatorIntegrationTest {
     }
 
     @Test
+    void passesWhenWhereClauseCoercesByteLiteral() {
+      repository.save(new SampleEntity(null, "emp-byte", null).setScoreByte((byte) 7));
+      Set<ConstraintViolation<ByteScoreEmployeeDto>> violations =
+          validator.validate(new ByteScoreEmployeeDto("emp-byte"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesShortLiteral() {
+      repository.save(new SampleEntity(null, "emp-short", null).setScoreShort((short) 9));
+      Set<ConstraintViolation<ShortScoreEmployeeDto>> violations =
+          validator.validate(new ShortScoreEmployeeDto("emp-short"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesLongLiteral() {
+      repository.save(new SampleEntity(null, "emp-long", null).setScoreLong(42L));
+      Set<ConstraintViolation<LongScoreEmployeeDto>> violations =
+          validator.validate(new LongScoreEmployeeDto("emp-long"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesFloatLiteral() {
+      repository.save(new SampleEntity(null, "emp-float", null).setScoreFloat(3.5f));
+      Set<ConstraintViolation<FloatScoreEmployeeDto>> violations =
+          validator.validate(new FloatScoreEmployeeDto("emp-float"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesDoubleLiteral() {
+      repository.save(new SampleEntity(null, "emp-double", null).setScoreDouble(4.25d));
+      Set<ConstraintViolation<DoubleScoreEmployeeDto>> violations =
+          validator.validate(new DoubleScoreEmployeeDto("emp-double"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void passesWhenWhereClauseCoercesCharacterLiteral() {
+      repository.save(new SampleEntity(null, "emp-grade", null).setGrade('A'));
+      Set<ConstraintViolation<GradeEmployeeDto>> violations =
+          validator.validate(new GradeEmployeeDto("emp-grade"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void failsWhenWhereClauseCharacterLiteralHasMultipleCharacters() {
+      InvalidGradeEmployeeDto dto = new InvalidGradeEmployeeDto("emp-grade");
+      assertThatThrownBy(() -> validator.validate(dto))
+          .rootCause()
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("single character");
+    }
+
+    @Test
+    void failsWhenWhereClauseTypeIsUnsupported() {
+      repository.save(new SampleEntity(null, "emp-date", null).setStartedOn(LocalDate.now()));
+      UnsupportedTypeEmployeeDto dto = new UnsupportedTypeEmployeeDto("emp-date");
+      assertThatThrownBy(() -> validator.validate(dto))
+          .rootCause()
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("Unsupported where.value type");
+    }
+
+    @Test
+    void failsWhenWhereClauseValueIsBlankAtRuntimeInitialization() {
+      BlankWhereValueEmployeeDto dto = new BlankWhereValueEmployeeDto("emp-blank");
+      assertThatThrownBy(() -> validator.validate(dto))
+          .rootCause()
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("where.value must not be blank");
+    }
+
+    @Test
     void failsWhenEntityColumnPathHasInvalidMidSegmentType() {
       InvalidEntityPathDto dto = new InvalidEntityPathDto("v");
       assertThatThrownBy(() -> validator.validate(dto))
@@ -160,6 +237,13 @@ class ExistsValidatorIntegrationTest {
           validator.validate(new StrictTypeLevelNestedDto(new InnerCode(null)));
       assertThat(violations).hasSize(1);
       assertThat(violations.iterator().next().getPropertyPath()).hasToString("inner.code");
+    }
+
+    @Test
+    void allowsBlankNestedValueWhenIgnoreNullOrEmptyEnabled() {
+      Set<ConstraintViolation<TypeLevelNestedDto>> violations =
+          validator.validate(new TypeLevelNestedDto(new InnerCode("   ")));
+      assertThat(violations).isEmpty();
     }
   }
 
@@ -302,6 +386,159 @@ class ExistsValidatorIntegrationTest {
     private final String code;
 
     AdminAccessEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class ByteScoreEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "scoreByte", value = "7")})
+    private final String code;
+
+    ByteScoreEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class ShortScoreEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "scoreShort", value = "9")})
+    private final String code;
+
+    ShortScoreEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class LongScoreEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "scoreLong", value = "42")})
+    private final String code;
+
+    LongScoreEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class FloatScoreEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "scoreFloat", value = "3.5")})
+    private final String code;
+
+    FloatScoreEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class DoubleScoreEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "scoreDouble", value = "4.25")})
+    private final String code;
+
+    DoubleScoreEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class GradeEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "grade", value = "A")})
+    private final String code;
+
+    GradeEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class InvalidGradeEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "grade", value = "AB")})
+    private final String code;
+
+    InvalidGradeEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class UnsupportedTypeEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "startedOn", value = "2026-01-01")})
+    private final String code;
+
+    UnsupportedTypeEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class BlankWhereValueEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "status", value = "   ")})
+    private final String code;
+
+    BlankWhereValueEmployeeDto(String code) {
       this.code = code;
     }
 

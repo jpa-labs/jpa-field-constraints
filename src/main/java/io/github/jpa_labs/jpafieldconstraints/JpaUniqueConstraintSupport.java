@@ -30,27 +30,26 @@ final class JpaUniqueConstraintSupport {
       String segment = segments[i];
       Attribute<?, ?> attr = current.getAttribute(segment);
       boolean last = i == segments.length - 1;
-      if (last) {
-        return;
-      }
-      switch (attr.getPersistentAttributeType()) {
-        case MANY_TO_ONE, ONE_TO_ONE -> {
-          Class<?> target = attr.getJavaType();
-          current = entityManager.getMetamodel().entity(target);
+      if (!last) {
+        switch (attr.getPersistentAttributeType()) {
+          case MANY_TO_ONE, ONE_TO_ONE -> {
+            Class<?> target = attr.getJavaType();
+            current = entityManager.getMetamodel().entity(target);
+          }
+          case EMBEDDED -> {
+            Class<?> embeddableClass = attr.getJavaType();
+            EmbeddableType<?> embeddable =
+                entityManager.getMetamodel().embeddable(embeddableClass);
+            current = embeddable;
+          }
+          default ->
+              throw new IllegalArgumentException(
+                  "Path segment '"
+                      + segment
+                      + "' in '"
+                      + attributePath
+                      + "' must be an association or embeddable when not the final segment");
         }
-        case EMBEDDED -> {
-          Class<?> embeddableClass = attr.getJavaType();
-          EmbeddableType<?> embeddable =
-              entityManager.getMetamodel().embeddable(embeddableClass);
-          current = embeddable;
-        }
-        default ->
-            throw new IllegalArgumentException(
-                "Path segment '"
-                    + segment
-                    + "' in '"
-                    + attributePath
-                    + "' must be an association or embeddable when not the final segment");
       }
     }
   }

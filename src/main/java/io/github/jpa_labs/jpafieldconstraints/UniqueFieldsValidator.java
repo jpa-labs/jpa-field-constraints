@@ -23,7 +23,7 @@ class UniqueFieldsValidator implements ConstraintValidator<UniqueFields, Object>
     for (int i = 0; i < rules.length; i++) {
       UniqueField rule = rules[i];
       UniqueConstraintPathSecurity.assertJpaEntityClass(rule.entity());
-      String dtoField = rule.dtoField() == null ? "" : rule.dtoField();
+      String dtoField = java.util.Objects.requireNonNullElse(rule.dtoField(), "");
       if (dtoField.isBlank()) {
         throw new IllegalArgumentException(
             "UniqueFields: rule at index " + i + " must declare a non-blank dtoField");
@@ -34,14 +34,14 @@ class UniqueFieldsValidator implements ConstraintValidator<UniqueFields, Object>
         throw new IllegalArgumentException("UniqueFields: column must not be blank at index " + i);
       }
       UniqueConstraintPathSecurity.assertJpaAttributePath(column, "UniqueFields.column[" + i + "]");
-      String excludePath = rule.excludeIdDtoField() == null ? "" : rule.excludeIdDtoField();
+      String excludePath = java.util.Objects.requireNonNullElse(rule.excludeIdDtoField(), "");
       if (!excludePath.isBlank()) {
         UniqueConstraintPathSecurity.assertDtoPropertyPath(
             excludePath, "UniqueFields.excludeIdDtoField[" + i + "]");
       }
       String entityIdProperty = rule.entityIdProperty();
       UniqueConstraintPathSecurity.assertEntityIdPropertyName(
-          entityIdProperty == null ? "" : entityIdProperty,
+          java.util.Objects.requireNonNullElse(entityIdProperty, ""),
           "UniqueFields.entityIdProperty[" + i + "]");
     }
   }
@@ -68,12 +68,9 @@ class UniqueFieldsValidator implements ConstraintValidator<UniqueFields, Object>
     if (JpaUniqueConstraintSupport.isEmptyValue(fieldValue, rule.ignoreNullOrEmpty())) {
       return true;
     }
-    String excludePath = rule.excludeIdDtoField() == null ? "" : rule.excludeIdDtoField();
+    String excludePath = java.util.Objects.requireNonNullElse(rule.excludeIdDtoField(), "");
     Object excludeEntityId = excludePath.isBlank() ? null : wrapper.getPropertyValue(excludePath);
     String entityIdProperty = rule.entityIdProperty();
-    if (entityIdProperty == null || entityIdProperty.isBlank()) {
-      throw new IllegalStateException("entityIdProperty must not be blank");
-    }
     long count =
         JpaUniqueConstraintSupport.countRowsEqual(
             entityManager,

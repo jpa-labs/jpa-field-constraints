@@ -91,9 +91,6 @@ public final class UniqueConstraintStaticRules {
           label + " exceeds maximum depth (" + MAX_PATH_SEGMENTS + " segments)");
     }
     for (String segment : segments) {
-      if (segment.isEmpty()) {
-        throw new IllegalArgumentException("Invalid " + label + " (empty segment): " + path);
-      }
       if (dtoPath) {
         assertNoBlockedSegment(segment, label, true);
       }

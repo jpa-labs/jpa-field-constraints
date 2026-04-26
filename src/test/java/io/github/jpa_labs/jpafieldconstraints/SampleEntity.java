@@ -7,6 +7,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import java.time.LocalDate;
 import java.util.UUID;
 
 @Entity
@@ -31,6 +32,20 @@ class SampleEntity {
 
   @Enumerated(EnumType.STRING)
   private Access access;
+
+  private Byte scoreByte;
+
+  private Short scoreShort;
+
+  private Long scoreLong;
+
+  private Float scoreFloat;
+
+  private Double scoreDouble;
+
+  private Character grade;
+
+  private LocalDate startedOn;
 
   SampleEntity() {}
 
@@ -97,6 +112,69 @@ class SampleEntity {
 
   public Access getAccess() {
     return access;
+  }
+
+  public Byte getScoreByte() {
+    return scoreByte;
+  }
+
+  public Short getScoreShort() {
+    return scoreShort;
+  }
+
+  public Long getScoreLong() {
+    return scoreLong;
+  }
+
+  public Float getScoreFloat() {
+    return scoreFloat;
+  }
+
+  public Double getScoreDouble() {
+    return scoreDouble;
+  }
+
+  public Character getGrade() {
+    return grade;
+  }
+
+  public LocalDate getStartedOn() {
+    return startedOn;
+  }
+
+  public SampleEntity setScoreByte(Byte scoreByte) {
+    this.scoreByte = scoreByte;
+    return this;
+  }
+
+  public SampleEntity setScoreShort(Short scoreShort) {
+    this.scoreShort = scoreShort;
+    return this;
+  }
+
+  public SampleEntity setScoreLong(Long scoreLong) {
+    this.scoreLong = scoreLong;
+    return this;
+  }
+
+  public SampleEntity setScoreFloat(Float scoreFloat) {
+    this.scoreFloat = scoreFloat;
+    return this;
+  }
+
+  public SampleEntity setScoreDouble(Double scoreDouble) {
+    this.scoreDouble = scoreDouble;
+    return this;
+  }
+
+  public SampleEntity setGrade(Character grade) {
+    this.grade = grade;
+    return this;
+  }
+
+  public SampleEntity setStartedOn(LocalDate startedOn) {
+    this.startedOn = startedOn;
+    return this;
   }
 
   enum Access {

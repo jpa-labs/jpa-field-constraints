@@ -2,7 +2,10 @@ package io.github.jpa_labs.jpafieldconstraints;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
+import java.util.Set;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -17,6 +20,7 @@ import org.springframework.test.context.TestPropertySource;
 class UniqueFieldsValidatorIntegrationTest {
 
   @Autowired private Validator validator;
+  @Autowired private SampleEntityRepository repository;
 
   @Test
   void initializeThrowsWhenRuleHasBlankDtoField() {
@@ -88,6 +92,29 @@ class UniqueFieldsValidatorIntegrationTest {
         .rootCause()
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Unsafe");
+  }
+
+  @Test
+  void skipsEmptyFieldValueWhenIgnoreNullOrEmptyEnabled() {
+    Set<ConstraintViolation<ValidRulesIgnoreEmptyDto>> violations =
+        validator.validate(new ValidRulesIgnoreEmptyDto("   ", UUID.randomUUID()));
+    org.assertj.core.api.Assertions.assertThat(violations).isEmpty();
+  }
+
+  @Test
+  void excludesCurrentRowUsingExcludeIdDtoField() {
+    SampleEntity saved = repository.save(new SampleEntity(null, "existing-code", null));
+    Set<ConstraintViolation<ValidRulesWithExcludeDto>> violations =
+        validator.validate(new ValidRulesWithExcludeDto("existing-code", saved.getId()));
+    org.assertj.core.api.Assertions.assertThat(violations).isEmpty();
+  }
+
+  @Test
+  void addsViolationWhenDuplicateExistsForAnotherRow() {
+    repository.save(new SampleEntity(null, "dup-code", null));
+    Set<ConstraintViolation<ValidRulesWithExcludeDto>> violations =
+        validator.validate(new ValidRulesWithExcludeDto("dup-code", UUID.randomUUID()));
+    org.assertj.core.api.Assertions.assertThat(violations).hasSize(1);
   }
 
   @UniqueFields(
@@ -170,5 +197,57 @@ class UniqueFieldsValidatorIntegrationTest {
   static class UnsafeExcludePathDto {
     @SuppressWarnings("unused")
     private final Object holder = new Object();
+  }
+
+  @UniqueFields(
+      value = {
+        @UniqueField(
+            entity = SampleEntity.class,
+            column = "code",
+            dtoField = "code",
+            ignoreNullOrEmpty = true),
+      })
+  static class ValidRulesIgnoreEmptyDto {
+    private final String code;
+    private final UUID id;
+
+    ValidRulesIgnoreEmptyDto(String code, UUID id) {
+      this.code = code;
+      this.id = id;
+    }
+
+    public String getCode() {
+      return code;
+    }
+
+    public UUID getId() {
+      return id;
+    }
+  }
+
+  @UniqueFields(
+      value = {
+        @UniqueField(
+            entity = SampleEntity.class,
+            column = "code",
+            dtoField = "code",
+            excludeIdDtoField = "id"),
+      })
+  static class ValidRulesWithExcludeDto {
+    private final String code;
+    private final UUID id;
+
+    ValidRulesWithExcludeDto(String code, UUID id) {
+      this.code = code;
+      this.id = id;
+    }
+
+    public String getCode() {
+      return code;
+    }
+
+    public UUID getId() {
+      return id;
+    }
   }
 }
