@@ -46,18 +46,35 @@ import java.lang.annotation.Target;
 @Repeatable(UniqueField.List.class)
 public @interface UniqueField {
 
+  /**
+   * Message template used when validation fails.
+   *
+   * @return Bean Validation message template
+   */
   String message() default "{io.github.jpa_labs.jpafieldconstraints.UniqueField.message}";
 
+  /**
+   * Bean Validation groups this constraint belongs to.
+   *
+   * @return validation groups
+   */
   Class<?>[] groups() default {};
 
+  /**
+   * Payload for clients of the Bean Validation API.
+   *
+   * @return payload types
+   */
   Class<? extends Payload>[] payload() default {};
 
-  /** JPA entity class to query. */
+  /** @return JPA entity class to query. */
   Class<?> entity();
 
   /**
    * Name of the entity attribute (JavaBean property) that must be unique, e.g. {@code "urid"} or
    * {@code "basicInfo.fanNumber"} for nested paths.
+   *
+   * @return entity attribute path that must be unique
    */
   String column();
 
@@ -65,6 +82,8 @@ public @interface UniqueField {
    * When non-blank, {@link UniqueFieldValidator} treats the validated object as the root DTO and
    * reads the value to check from this property path (e.g. {@code "code"} or {@code "inner.code"}
    * ). Must be blank when the annotation is placed on a field, method, or parameter.
+   *
+   * @return DTO property path for type-level validation, or blank for direct-value mode
    */
   String dtoField() default "";
 
@@ -76,27 +95,36 @@ public @interface UniqueField {
    * <p><b>Security:</b> this only affects uniqueness checking. Callers must still authorize that
    * the principal may act on the row identified by this id (otherwise a client could attempt
    * id-guessing together with duplicate values; real protection belongs in your service layer).
+   *
+   * @return DTO property path containing the id to exclude, or blank when not used
    */
   String excludeIdDtoField() default "";
 
   /**
    * Entity id property name used with {@link #excludeIdDtoField()} (ignored when no exclude id is
    * provided).
+   *
+   * @return entity id property name used for exclusion logic
    */
   String entityIdProperty() default "id";
 
   /**
    * When true, null and blank strings are considered valid (no DB check). When false, null fails
    * uniqueness only if you also add {@code @NotNull}.
+   *
+   * @return whether null/blank values should be ignored
    */
   boolean ignoreNullOrEmpty() default true;
 
   /**
    * For string values only: compare using {@link String#equalsIgnoreCase(String)} in the database
    * query (implemented as lower() = lower() for portability).
+   *
+   * @return whether string comparison should be case-insensitive
    */
   boolean ignoreCase() default false;
 
+  /** Container annotation that enables repeating {@link UniqueField}. */
   @Documented
   @Target({
     ElementType.FIELD,
@@ -107,6 +135,7 @@ public @interface UniqueField {
   })
   @Retention(RetentionPolicy.RUNTIME)
   @interface List {
+    /** @return repeated {@link UniqueField} declarations. */
     UniqueField[] value();
   }
 }

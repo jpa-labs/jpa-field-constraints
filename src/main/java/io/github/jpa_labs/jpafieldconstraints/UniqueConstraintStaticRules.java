@@ -40,6 +40,13 @@ public final class UniqueConstraintStaticRules {
           "enclosingclass",
           "enclosingmethod");
 
+  /**
+   * Validates that a configured entity class is usable for JPA-backed constraint checks.
+   *
+   * @param entityClass candidate entity class
+   * @throws IllegalArgumentException when class is null, primitive/array, or not annotated
+   *     {@link Entity}
+   */
   public static void validateEntityClass(Class<?> entityClass) {
     if (entityClass == null) {
       throw new IllegalArgumentException("entity class must not be null");
@@ -53,6 +60,13 @@ public final class UniqueConstraintStaticRules {
     }
   }
 
+  /**
+   * Validates an entity id property name used for update exclusion checks.
+   *
+   * @param name configured id property name
+   * @param label logical field name used in exception messages
+   * @throws IllegalArgumentException when the value is blank, nested, malformed, or blocked
+   */
   public static void validateEntityIdPropertyName(String name, String label) {
     if (name == null || name.isBlank()) {
       throw new IllegalArgumentException(label + " must not be blank");
@@ -66,10 +80,26 @@ public final class UniqueConstraintStaticRules {
     assertNoBlockedSegment(name, label, false);
   }
 
+  /**
+   * Validates a JPA attribute path used in constraints (e.g. {@code "email"} or
+   * {@code "profile.login"}).
+   *
+   * @param path configured entity attribute path
+   * @param label logical field name used in exception messages
+   * @throws IllegalArgumentException when the path is blank, malformed, or too deep/long
+   */
   public static void validateJpaAttributePath(String path, String label) {
     assertPropertyPathShape(path, label, false);
   }
 
+  /**
+   * Validates a DTO property path resolved through {@code BeanWrapper}.
+   *
+   * @param path configured DTO path (e.g. {@code "request.id"})
+   * @param label logical field name used in exception messages
+   * @throws IllegalArgumentException when the path is blank, malformed, too deep/long, or includes
+   *     blocked segments
+   */
   public static void validateDtoPropertyPath(String path, String label) {
     assertPropertyPathShape(path, label, true);
   }
