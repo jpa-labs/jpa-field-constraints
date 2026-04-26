@@ -69,6 +69,25 @@ class ExistsValidatorIntegrationTest {
     }
 
     @Test
+    void passesWhenWhereClausesMatchSameRow() {
+      repository.save(new SampleEntity(null, "emp-001", null, "ACTIVE", "STAFF"));
+      repository.save(new SampleEntity(null, "emp-001", null, "INACTIVE", "STAFF"));
+      Set<ConstraintViolation<ActiveEmployeeDto>> violations =
+          validator.validate(new ActiveEmployeeDto("emp-001"));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void rejectsWhenWhereClausesDoNotMatch() {
+      repository.save(new SampleEntity(null, "emp-001", null, "INACTIVE", "STAFF"));
+      repository.save(new SampleEntity(null, "emp-001", null, "ACTIVE", "USER"));
+      Set<ConstraintViolation<ActiveAdminDto>> violations =
+          validator.validate(new ActiveAdminDto("emp-001"));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
+    }
+
+    @Test
     void failsWhenEntityColumnPathHasInvalidMidSegmentType() {
       InvalidEntityPathDto dto = new InvalidEntityPathDto("v");
       assertThatThrownBy(() -> validator.validate(dto))
@@ -140,6 +159,43 @@ class ExistsValidatorIntegrationTest {
     private final String code;
 
     StrictFieldLevelDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class ActiveEmployeeDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {@Exists.Where(column = "status", value = "ACTIVE")})
+    private final String code;
+
+    ActiveEmployeeDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class ActiveAdminDto {
+
+    @Exists(
+        entity = SampleEntity.class,
+        column = "code",
+        where = {
+          @Exists.Where(column = "status", value = "ACTIVE"),
+          @Exists.Where(column = "role", value = "ADMIN")
+        })
+    private final String code;
+
+    ActiveAdminDto(String code) {
       this.code = code;
     }
 

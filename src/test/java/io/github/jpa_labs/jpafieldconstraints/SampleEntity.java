@@ -17,12 +17,22 @@ class SampleEntity {
 
   private String secondaryCode;
 
+  private String status;
+
+  private String role;
+
   SampleEntity() {}
 
   SampleEntity(UUID id, String code, String secondaryCode) {
+    this(id, code, secondaryCode, null, null);
+  }
+
+  SampleEntity(UUID id, String code, String secondaryCode, String status, String role) {
     this.id = id;
     this.code = code;
     this.secondaryCode = secondaryCode;
+    this.status = status;
+    this.role = role;
   }
 
   public UUID getId() {
@@ -35,5 +45,13 @@ class SampleEntity {
 
   public String getSecondaryCode() {
     return secondaryCode;
+  }
+
+  public String getStatus() {
+    return status;
+  }
+
+  public String getRole() {
+    return role;
   }
 }

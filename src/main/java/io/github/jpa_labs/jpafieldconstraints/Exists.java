@@ -64,6 +64,27 @@ public @interface Exists {
    */
   boolean ignoreCase() default false;
 
+  /**
+   * Additional static equality filters joined with AND (for example status=ACTIVE).
+   *
+   * <p>Useful for scoped existence checks like "employee exists and is active".
+   */
+  Where[] where() default {};
+
+  @Documented
+  @Target({})
+  @Retention(RetentionPolicy.RUNTIME)
+  @interface Where {
+    /** Entity attribute path to filter on. */
+    String column();
+
+    /** Literal value compared with equality. */
+    String value();
+
+    /** For string-valued attributes only, compare case-insensitively. */
+    boolean ignoreCase() default false;
+  }
+
   @Documented
   @Target({
     ElementType.FIELD,

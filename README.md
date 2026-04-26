@@ -106,6 +106,21 @@ public class AssignRequest {
 
 `@Exists` supports field/method/parameter placement and type-level placement via `dtoField`, similar to `@UniqueField`.
 
+You can also scope existence checks with static filters:
+
+```java
+public class AssignAdminRequest {
+  @Exists(
+      entity = User.class,
+      column = "username",
+      where = {
+        @Exists.Where(column = "status", value = "ACTIVE"),
+        @Exists.Where(column = "role", value = "ADMIN")
+      })
+  private String username;
+}
+```
+
 **Collection existence check** - use `@AllExists` when all incoming IDs/codes must already exist:
 
 ```java
