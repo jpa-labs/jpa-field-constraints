@@ -22,11 +22,27 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UniqueFields {
 
+  /**
+   * Message template used when any nested uniqueness rule fails.
+   *
+   * @return Bean Validation message template
+   */
   String message() default "{io.github.jpa_labs.jpafieldconstraints.UniqueFields.message}";
 
+  /**
+   * Bean Validation groups this constraint belongs to.
+   *
+   * @return validation groups
+   */
   Class<?>[] groups() default {};
 
+  /**
+   * Payload for clients of the Bean Validation API.
+   *
+   * @return payload types
+   */
   Class<? extends Payload>[] payload() default {};
 
+  /** @return The set of nested uniqueness rules to apply. */
   UniqueField[] value();
 }
