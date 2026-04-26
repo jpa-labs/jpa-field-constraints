@@ -1,6 +1,7 @@
 package io.github.jpa_labs.uniquefield.apt;
 
 import io.github.jpa_labs.uniquefield.UniqueConstraintStaticRules;
+import io.github.jpa_labs.uniquefield.AllExists;
 import io.github.jpa_labs.uniquefield.Exists;
 import io.github.jpa_labs.uniquefield.UniqueField;
 import io.github.jpa_labs.uniquefield.UniqueFields;
@@ -33,6 +34,8 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
   @Override
   public Set<String> getSupportedAnnotationTypes() {
     return Set.of(
+        AllExists.class.getCanonicalName(),
+        AllExists.List.class.getCanonicalName(),
         Exists.class.getCanonicalName(),
         Exists.List.class.getCanonicalName(),
         UniqueField.class.getCanonicalName(),
@@ -42,6 +45,20 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
 
   @Override
   public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+    for (Element element : roundEnv.getElementsAnnotatedWith(AllExists.class)) {
+      for (AnnotationMirror am : element.getAnnotationMirrors()) {
+        if (isAllExistsMirror(am)) {
+          validateAllExistsMirror(am, element);
+        }
+      }
+    }
+    for (Element element : roundEnv.getElementsAnnotatedWith(AllExists.List.class)) {
+      for (AnnotationMirror am : element.getAnnotationMirrors()) {
+        if (isAllExistsListMirror(am)) {
+          validateAllExistsListMirror(am, element);
+        }
+      }
+    }
     for (Element element : roundEnv.getElementsAnnotatedWith(Exists.class)) {
       for (AnnotationMirror am : element.getAnnotationMirrors()) {
         if (isExistsMirror(am)) {
@@ -91,6 +108,24 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
 
   private boolean isExistsMirror(AnnotationMirror am) {
     return Exists.class
+        .getCanonicalName()
+        .contentEquals(
+            ((TypeElement) processingEnv.getTypeUtils().asElement(am.getAnnotationType()))
+                .getQualifiedName()
+                .toString());
+  }
+
+  private boolean isAllExistsMirror(AnnotationMirror am) {
+    return AllExists.class
+        .getCanonicalName()
+        .contentEquals(
+            ((TypeElement) processingEnv.getTypeUtils().asElement(am.getAnnotationType()))
+                .getQualifiedName()
+                .toString());
+  }
+
+  private boolean isAllExistsListMirror(AnnotationMirror am) {
+    return AllExists.List.class
         .getCanonicalName()
         .contentEquals(
             ((TypeElement) processingEnv.getTypeUtils().asElement(am.getAnnotationType()))
@@ -158,6 +193,25 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
       for (Object o : list) {
         if (o instanceof AnnotationMirror nested) {
           validateExistsMirror(nested, element);
+        }
+      }
+    }
+  }
+
+  private void validateAllExistsListMirror(AnnotationMirror listMirror, Element element) {
+    Map<? extends ExecutableElement, ? extends AnnotationValue> values =
+        processingEnv.getElementUtils().getElementValuesWithDefaults(listMirror);
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : values.entrySet()) {
+      if (!e.getKey().getSimpleName().contentEquals("value")) {
+        continue;
+      }
+      Object raw = e.getValue().getValue();
+      if (!(raw instanceof List<?> list)) {
+        continue;
+      }
+      for (Object o : list) {
+        if (o instanceof AnnotationMirror nested) {
+          validateAllExistsMirror(nested, element);
         }
       }
     }
@@ -331,6 +385,57 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
         element, "@Exists is not supported on " + element.getKind() + " (unsupported placement)");
   }
 
+  private void validateAllExistsMirror(AnnotationMirror am, Element element) {
+    ParsedAllExists p = parseAllExistsMirror(am);
+    if (!assertJpaEntity(p.entityType, element, "")) {
+      return;
+    }
+    try {
+      UniqueConstraintStaticRules.validateJpaAttributePath(p.column, "column");
+    } catch (IllegalArgumentException ex) {
+      printError(element, ex.getMessage());
+      return;
+    }
+
+    String dtoField = p.dtoField == null ? "" : p.dtoField.trim();
+
+    boolean fieldLike =
+        element.getKind() == ElementKind.FIELD
+            || element.getKind() == ElementKind.METHOD
+            || element.getKind() == ElementKind.PARAMETER
+            || element.getKind() == ElementKind.RECORD_COMPONENT;
+
+    boolean typePlacement =
+        element.getKind() == ElementKind.CLASS
+            || element.getKind() == ElementKind.INTERFACE
+            || element.getKind() == ElementKind.RECORD
+            || element.getKind() == ElementKind.ENUM;
+
+    if (fieldLike) {
+      if (!dtoField.isBlank()) {
+        printError(
+            element, "dtoField must be blank when @AllExists is on a field, method, or parameter");
+      }
+      return;
+    }
+
+    if (typePlacement) {
+      if (dtoField.isBlank()) {
+        printError(element, "dtoField is required when @AllExists is placed on a type");
+        return;
+      }
+      try {
+        UniqueConstraintStaticRules.validateDtoPropertyPath(dtoField, "dtoField");
+      } catch (IllegalArgumentException ex) {
+        printError(element, ex.getMessage());
+      }
+      return;
+    }
+
+    printError(
+        element, "@AllExists is not supported on " + element.getKind() + " (unsupported placement)");
+  }
+
   private boolean assertJpaEntity(TypeMirror entityType, Element reportOn, String prefix) {
     if (entityType == null || entityType.getKind() == TypeKind.ERROR) {
       printError(reportOn, prefix + "entity type is invalid");
@@ -422,6 +527,27 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
     return p;
   }
 
+  private ParsedAllExists parseAllExistsMirror(AnnotationMirror am) {
+    Map<? extends ExecutableElement, ? extends AnnotationValue> map =
+        processingEnv.getElementUtils().getElementValuesWithDefaults(am);
+    ParsedAllExists p = new ParsedAllExists();
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : map.entrySet()) {
+      String key = e.getKey().getSimpleName().toString();
+      Object v = e.getValue().getValue();
+      switch (key) {
+        case "entity" -> {
+          if (v instanceof TypeMirror tm) {
+            p.entityType = tm;
+          }
+        }
+        case "column" -> p.column = v instanceof String s ? s : null;
+        case "dtoField" -> p.dtoField = v instanceof String s ? s : null;
+        default -> {}
+      }
+    }
+    return p;
+  }
+
   private void printError(Element element, String msg) {
     processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR, msg, element);
   }
@@ -435,6 +561,12 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
   }
 
   private static final class ParsedExists {
+    TypeMirror entityType;
+    String column;
+    String dtoField;
+  }
+
+  private static final class ParsedAllExists {
     TypeMirror entityType;
     String column;
     String dtoField;

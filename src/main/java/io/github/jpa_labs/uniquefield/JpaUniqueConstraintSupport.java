@@ -12,8 +12,10 @@ import jakarta.persistence.metamodel.EmbeddableType;
 import jakarta.persistence.metamodel.EntityType;
 import jakarta.persistence.metamodel.ManagedType;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 final class JpaUniqueConstraintSupport {
 
@@ -32,13 +34,11 @@ final class JpaUniqueConstraintSupport {
       }
       switch (attr.getPersistentAttributeType()) {
         case MANY_TO_ONE, ONE_TO_ONE -> {
-          @SuppressWarnings("unchecked")
-          Class<?> target = (Class<?>) attr.getJavaType();
+          Class<?> target = attr.getJavaType();
           current = entityManager.getMetamodel().entity(target);
         }
         case EMBEDDED -> {
-          @SuppressWarnings("unchecked")
-          Class<?> embeddableClass = (Class<?>) attr.getJavaType();
+          Class<?> embeddableClass = attr.getJavaType();
           EmbeddableType<?> embeddable =
               entityManager.getMetamodel().embeddable(embeddableClass);
           current = embeddable;
@@ -82,6 +82,29 @@ final class JpaUniqueConstraintSupport {
     return entityManager.createQuery(cq).getSingleResult();
   }
 
+  static long countRowsIn(
+      EntityManager entityManager,
+      Class<?> entityClass,
+      String attributePath,
+      Set<Object> values,
+      boolean ignoreCase) {
+    validateAttributePath(entityManager, entityClass, attributePath);
+    if (values == null || values.isEmpty()) {
+      return 0;
+    }
+    CriteriaBuilder cb = entityManager.getCriteriaBuilder();
+    CriteriaQuery<Object> cq = cb.createQuery(Object.class);
+    @SuppressWarnings("unchecked")
+    Root<Object> root = (Root<Object>) cq.from(entityClass);
+    Path<?> path = resolvePath(root, attributePath);
+    Predicate predicate = buildInPredicate(cb, path, values, ignoreCase);
+    Expression<?> selectExpr =
+        ignoreCase && path.getJavaType() == String.class ? cb.lower(path.as(String.class)) : path;
+    cq.select((Expression<Object>) selectExpr).distinct(true).where(predicate);
+    List<Object> rows = entityManager.createQuery(cq).getResultList();
+    return rows.size();
+  }
+
   @SuppressWarnings({"rawtypes", "unchecked"})
   private static Predicate buildEqualsPredicate(
       CriteriaBuilder cb, Path<?> path, Object value, boolean ignoreCase) {
@@ -101,6 +124,23 @@ final class JpaUniqueConstraintSupport {
       current = current.get(segment);
     }
     return current;
+  }
+
+  @SuppressWarnings("unchecked")
+  private static Predicate buildInPredicate(
+      CriteriaBuilder cb, Path<?> path, Set<Object> values, boolean ignoreCase) {
+    if (ignoreCase && path.getJavaType() == String.class) {
+      Set<String> normalized = new LinkedHashSet<>();
+      for (Object value : values) {
+        if (!(value instanceof String s)) {
+          return cb.disjunction();
+        }
+        normalized.add(s.toLowerCase(Locale.ROOT));
+      }
+      Expression<String> loweredPath = cb.lower(path.as(String.class));
+      return loweredPath.in(normalized);
+    }
+    return path.in(values);
   }
 
   static boolean isEmptyValue(Object value, boolean ignoreNullOrEmpty) {

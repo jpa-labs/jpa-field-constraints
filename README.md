@@ -1,6 +1,6 @@
 # uniquefield-spring
 
-Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@UniqueField`, `@UniqueFields`, and `@Exists` for Spring Boot 3 with Hibernate / JPA.
+Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@UniqueField`, `@UniqueFields`, `@Exists`, and `@AllExists` for Spring Boot 3 with Hibernate / JPA.
 
 - **Java 17**, Spring Boot 3.x (BOM aligned in this repo to 3.5.x).
 - **Runtime**: validators are Spring beans (EntityManager is injected); auto-configuration registers them.
@@ -98,6 +98,17 @@ public class AssignRequest {
 ```
 
 `@Exists` supports field/method/parameter placement and type-level placement via `dtoField`, similar to `@UniqueField`.
+
+**Collection existence check** - use `@AllExists` when all incoming IDs/codes must already exist:
+
+```java
+public class AssignRolesRequest {
+  @AllExists(entity = Role.class, column = "id")
+  private List<UUID> roleIds;
+}
+```
+
+`@AllExists` supports field/method/parameter placement (on iterable values) and type-level placement via `dtoField`.
 
 ## Build & test
 
