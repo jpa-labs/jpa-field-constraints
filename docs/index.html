@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>jpa-field-constraints docs</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css"
+    />
+    <style>
+      :root {
+        color-scheme: light dark;
+      }
+      body {
+        margin: 0;
+        background: #f8fafc;
+        color: #0f172a;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        line-height: 1.65;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem 1rem 3rem;
+      }
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(220px, 280px) minmax(0, 1fr);
+        gap: 1.5rem;
+      }
+      .toc {
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow: auto;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #ffffff;
+        padding: 0.9rem;
+      }
+      .toc h2 {
+        margin: 0 0 0.6rem;
+        font-size: 0.95rem;
+      }
+      .toc nav ul {
+        margin: 0;
+        padding-left: 0;
+        list-style: none;
+      }
+      .toc nav li {
+        margin: 0.3rem 0;
+      }
+      .toc nav li.depth-3 {
+        padding-left: 0.9rem;
+      }
+      .toc nav a {
+        color: #334155;
+        text-decoration: none;
+        font-size: 0.92rem;
+      }
+      .toc nav a:hover {
+        color: #1d4ed8;
+        text-decoration: underline;
+      }
+      .content {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #ffffff;
+        padding: 1.5rem;
+      }
+      h1, h2, h3, h4 {
+        line-height: 1.25;
+        scroll-margin-top: 1rem;
+      }
+      h1 {
+        margin-top: 0;
+      }
+      h2 {
+        margin-top: 1.8rem;
+        padding-top: 0.2rem;
+        border-top: 1px solid #f1f5f9;
+      }
+      pre {
+        padding: 0.9rem;
+        border-radius: 8px;
+        overflow-x: auto;
+        background: #2d2d2d;
+        color: #f8f8f2;
+      }
+      code, pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      :not(pre) > code {
+        background: #f1f5f9;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+      }
+      img {
+        max-width: 100%;
+      }
+      a {
+        color: #1d4ed8;
+        word-break: break-word;
+      }
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .toc {
+          position: static;
+          max-height: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="layout">
+        <aside class="toc">
+          <h2>Table of contents</h2>
+          <nav id="toc-nav" aria-label="Table of contents"></nav>
+        </aside>
+        <article id="doc-content" class="content">
+<h1>jpa-field-constraints</h1>
+<p>Jakarta Bean Validation constraints for JPA-backed field checks in Spring Boot.</p>
+<h2>What this library provides</h2>
+<ul>
+<li><code>@UniqueField</code> and <code>@UniqueFields</code> for uniqueness validation.</li>
+<li><code>@Exists</code> and <code>@AllExists</code> for existence validation.</li>
+<li>Runtime validators with optional annotation processing for compile-time checks.</li>
+</ul>
+<h2>Quick links</h2>
+<ul>
+<li><a href="https://github.com/jpa-labs/jpa-field-constraints">Repository</a></li>
+<li><a href="https://jitpack.io/#jpa-labs/jpa-field-constraints">JitPack Package</a></li>
+</ul>
+<h2>Requirements</h2>
+<ul>
+<li>Java 17+</li>
+<li>Spring Boot 3.5.x or 4.0.x</li>
+<li>Jakarta Validation and JPA in your application</li>
+<li>A JPA provider (Hibernate is common)</li>
+</ul>
+<h2>Installation</h2>
+<h3>Gradle (JitPack)</h3>
+<p>Add JitPack repository:</p>
+<pre><code class="language-gradle">repositories {
+    mavenCentral()
+    maven { url = &#39;https://jitpack.io&#39; }
+}
+</code></pre>
+<p>Add dependency (and optional annotation processor):</p>
+<pre><code class="language-gradle">dependencies {
+    implementation &#39;com.github.jpa-labs:jpa-field-constraints:TAG_OR_COMMIT&#39;
+    annotationProcessor &#39;com.github.jpa-labs:jpa-field-constraints:TAG_OR_COMMIT&#39; // optional, recommended
+}
+</code></pre>
+<h3>Gradle (GitHub Packages)</h3>
+<p>Set credentials in <code>gradle.properties</code>:</p>
+<pre><code class="language-properties">gpr.user=GITHUB_USERNAME
+gpr.key=GITHUB_TOKEN_OR_PAT
+</code></pre>
+<p>Use the package repository:</p>
+<pre><code class="language-gradle">repositories {
+    mavenCentral()
+    maven {
+        url = uri(&#39;https://maven.pkg.github.com/jpa-labs/jpa-field-constraints&#39;)
+        credentials {
+            username = findProperty(&#39;gpr.user&#39;) as String
+            password = findProperty(&#39;gpr.key&#39;) as String
+        }
+    }
+}
+</code></pre>
+<h3>Maven (JitPack)</h3>
+<pre><code class="language-xml">&lt;repositories&gt;
+  &lt;repository&gt;
+    &lt;id&gt;jitpack.io&lt;/id&gt;
+    &lt;url&gt;https://jitpack.io&lt;/url&gt;
+  &lt;/repository&gt;
+&lt;/repositories&gt;
+
+&lt;dependency&gt;
+  &lt;groupId&gt;com.github.jpa-labs&lt;/groupId&gt;
+  &lt;artifactId&gt;jpa-field-constraints&lt;/artifactId&gt;
+  &lt;version&gt;TAG_OR_COMMIT&lt;/version&gt;
+&lt;/dependency&gt;
+</code></pre>
+<h2>Spring Boot setup</h2>
+<p>Ensure your application includes:</p>
+<pre><code class="language-gradle">dependencies {
+    implementation &#39;org.springframework.boot:spring-boot-starter-data-jpa&#39;
+    implementation &#39;org.springframework.boot:spring-boot-starter-validation&#39;
+    implementation &#39;com.github.jpa-labs:jpa-field-constraints:TAG_OR_COMMIT&#39;
+}
+</code></pre>
+<p>Validators are registered through auto-configuration; no manual bean setup is required.</p>
+<h2>Usage examples</h2>
+<h3>1) Unique single field with <code>@UniqueField</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+
+public class RegisterResidentRequest {
+    @UniqueField(entity = Resident.class, column = &quot;urid&quot;)
+    private String urid;
+}
+</code></pre>
+<h3>2) Multiple unique fields with <code>@UniqueFields</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueFields;
+
+@UniqueFields({
+    @UniqueField(entity = Item.class, column = &quot;code&quot;, dtoField = &quot;code&quot;),
+    @UniqueField(entity = Item.class, column = &quot;sku&quot;, dtoField = &quot;sku&quot;)
+})
+public class ItemRequest {
+    private String code;
+    private String sku;
+}
+</code></pre>
+<h3>3) Update scenario (exclude current entity ID)</h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+
+public class UpdateResidentRequest {
+    private Long id;
+
+    @UniqueField(
+        entity = Resident.class,
+        column = &quot;urid&quot;,
+        excludeIdDtoField = &quot;id&quot;,
+        entityIdProperty = &quot;id&quot;
+    )
+    private String urid;
+}
+</code></pre>
+<h3>4) Value must exist with <code>@Exists</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.Exists;
+
+public class AssignRequest {
+    @Exists(entity = Resident.class, column = &quot;urid&quot;)
+    private String residentUrid;
+}
+</code></pre>
+<p>With additional filters:</p>
+<pre><code class="language-java">public class ApproveEmployeeRequest {
+    @Exists(
+        entity = Employee.class,
+        column = &quot;employeeNumber&quot;,
+        where = {@Exists.Where(column = &quot;status&quot;, value = &quot;ACTIVE&quot;)}
+    )
+    private String employeeNumber;
+}
+</code></pre>
+<p>Multiple filters are joined with AND:</p>
+<pre><code class="language-java">public class AssignAdminRequest {
+    @Exists(
+        entity = User.class,
+        column = &quot;username&quot;,
+        where = {
+            @Exists.Where(column = &quot;status&quot;, value = &quot;ACTIVE&quot;),
+            @Exists.Where(column = &quot;role&quot;, value = &quot;ADMIN&quot;)
+        }
+    )
+    private String username;
+}
+</code></pre>
+<h3>5) All values must exist with <code>@AllExists</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.AllExists;
+import java.util.List;
+import java.util.UUID;
+
+public class AssignRolesRequest {
+    @AllExists(entity = Role.class, column = &quot;id&quot;)
+    private List&lt;UUID&gt; roleIds;
+}
+</code></pre>
+<h2>More usage patterns</h2>
+<h3>6) Type-level <code>@UniqueField</code> with <code>dtoField</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+
+@UniqueField(entity = Product.class, column = &quot;sku&quot;, dtoField = &quot;sku&quot;)
+public class CreateProductRequest {
+    private String sku;
+}
+</code></pre>
+<h3>7) Nested entity property path</h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.Exists;
+
+public class RegisterHouseholdRequest {
+    @Exists(entity = Resident.class, column = &quot;basicInfo.fanNumber&quot;)
+    private String fanNumber;
+}
+</code></pre>
+<h3>8) Case-insensitive uniqueness</h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+
+public class CreateUserRequest {
+    @UniqueField(entity = User.class, column = &quot;email&quot;, ignoreCase = true)
+    private String email;
+}
+</code></pre>
+<h3>9) Ignore null/blank values</h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+
+public class PatchResidentRequest {
+    @UniqueField(
+        entity = Resident.class,
+        column = &quot;phoneNumber&quot;,
+        ignoreNullOrEmpty = true
+    )
+    private String phoneNumber;
+}
+</code></pre>
+<h3>10) Method parameter validation</h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.Exists;
+import jakarta.validation.Valid;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@Validated
+@RestController
+class AssignmentController {
+
+    @PostMapping(&quot;/assign&quot;)
+    public void assignResident(
+        @RequestParam
+        @Exists(entity = Resident.class, column = &quot;urid&quot;) String residentUrid,
+        @Valid AssignRequest request
+    ) {
+        // business logic
+    }
+}
+</code></pre>
+<h3>11) Type-level <code>@Exists</code> with <code>dtoField</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.Exists;
+
+@Exists(entity = Department.class, column = &quot;code&quot;, dtoField = &quot;departmentCode&quot;)
+public class TransferRequest {
+    private String departmentCode;
+}
+</code></pre>
+<h3>12) Type-level <code>@AllExists</code> with <code>dtoField</code></h3>
+<pre><code class="language-java">import io.github.jpa_labs.jpafieldconstraints.AllExists;
+import java.util.List;
+import java.util.UUID;
+
+@AllExists(entity = Permission.class, column = &quot;id&quot;, dtoField = &quot;permissionIds&quot;)
+public class UpdateRolePermissionsRequest {
+    private List&lt;UUID&gt; permissionIds;
+}
+</code></pre>
+<h2>End-to-end request validation flow</h2>
+<p>Use <code>@Valid</code> in controllers so Bean Validation runs automatically:</p>
+<pre><code class="language-java">import jakarta.validation.Valid;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+class ResidentController {
+
+    @PostMapping(&quot;/residents&quot;)
+    ResponseEntity&lt;Void&gt; create(@Valid @RequestBody RegisterResidentRequest request) {
+        // If constraints fail, Spring returns 400 with validation details.
+        return ResponseEntity.ok().build();
+    }
+}
+</code></pre>
+<h2>Important notes</h2>
+<ul>
+<li><code>column</code> uses the entity JavaBean property path (for example: <code>basicInfo.fanNumber</code>).</li>
+<li>For type-level constraints, provide <code>dtoField</code> to point to the DTO property.</li>
+<li><code>excludeIdDtoField</code> only changes uniqueness query behavior; authorization remains in your service layer.</li>
+<li>Useful options include <code>ignoreNullOrEmpty</code> and <code>ignoreCase</code>.</li>
+</ul>
+<h2>Build and test</h2>
+<pre><code class="language-bash">./gradlew build
+</code></pre>
+<p>Test against specific Spring Boot versions:</p>
+<pre><code class="language-bash">./gradlew clean test -PbootVersion=3.5.4
+./gradlew clean test -PbootVersion=4.0.0
+</code></pre>
+<h2>License</h2>
+<p>Apache License 2.0.</p>
+        </article>
+      </div>
+    </main>
+    <script>
+      const slugify = (text) =>
+        text
+          .toLowerCase()
+          .replaceAll(/[^a-z0-9 -]/g, "")
+          .trim()
+          .replaceAll(/\s+/g, "-");
+
+      const content = document.getElementById("doc-content");
+      const tocNav = document.getElementById("toc-nav");
+      const headings = Array.from(content.querySelectorAll("h2, h3"));
+
+      const items = headings.map((heading) => {
+        if (!heading.id) {
+          heading.id = slugify(heading.textContent || "");
+        }
+        return {
+          id: heading.id,
+          text: heading.textContent || "",
+          depth: heading.tagName === "H2" ? 2 : 3,
+        };
+      });
+
+      tocNav.innerHTML =
+        '<ul>' +
+        items
+          .map(
+            (item) =>
+              '<li class="depth-' +
+              item.depth +
+              '"><a href="#' +
+              item.id +
+              '">' +
+              item.text +
+              "</a></li>"
+          )
+          .join("") +
+        "</ul>";
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-java.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-gradle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-properties.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-markup.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-bash.min.js"></script>
+    <script>
+      document.querySelectorAll("pre code").forEach((block) => {
+        const className = Array.from(block.classList).find((name) => name.startsWith("language-"));
+        if (className) {
+          block.classList.add(className.replace("language-", "lang-"));
+        }
+      });
+      Prism.highlightAll();
+    </script>
+  </body>
+</html>
