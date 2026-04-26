@@ -102,7 +102,7 @@ Validators are registered through auto-configuration; no manual bean setup is re
 ### 1) Unique single field with `@UniqueField`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
 
 public class RegisterResidentRequest {
     @UniqueField(entity = Resident.class, column = "urid")
@@ -113,8 +113,8 @@ public class RegisterResidentRequest {
 ### 2) Multiple unique fields with `@UniqueFields`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueFields;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueFields;
 
 @UniqueFields({
     @UniqueField(entity = Item.class, column = "code", dtoField = "code"),
@@ -129,7 +129,7 @@ public class ItemRequest {
 ### 3) Update scenario (exclude current entity ID)
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
 
 public class UpdateResidentRequest {
     private Long id;
@@ -147,7 +147,7 @@ public class UpdateResidentRequest {
 ### 4) Value must exist with `@Exists`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.Exists;
+import io.github.jpa_labs.jpafieldconstraints.Exists;
 
 public class AssignRequest {
     @Exists(entity = Resident.class, column = "urid")
@@ -187,7 +187,7 @@ public class AssignAdminRequest {
 ### 5) All values must exist with `@AllExists`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.AllExists;
+import io.github.jpa_labs.jpafieldconstraints.AllExists;
 import java.util.List;
 import java.util.UUID;
 
@@ -202,7 +202,7 @@ public class AssignRolesRequest {
 ### 6) Type-level `@UniqueField` with `dtoField`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
 
 @UniqueField(entity = Product.class, column = "sku", dtoField = "sku")
 public class CreateProductRequest {
@@ -213,7 +213,7 @@ public class CreateProductRequest {
 ### 7) Nested entity property path
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.Exists;
+import io.github.jpa_labs.jpafieldconstraints.Exists;
 
 public class RegisterHouseholdRequest {
     @Exists(entity = Resident.class, column = "basicInfo.fanNumber")
@@ -224,7 +224,7 @@ public class RegisterHouseholdRequest {
 ### 8) Case-insensitive uniqueness
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
 
 public class CreateUserRequest {
     @UniqueField(entity = User.class, column = "email", ignoreCase = true)
@@ -235,7 +235,7 @@ public class CreateUserRequest {
 ### 9) Ignore null/blank values
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.UniqueField;
+import io.github.jpa_labs.jpafieldconstraints.UniqueField;
 
 public class PatchResidentRequest {
     @UniqueField(
@@ -250,7 +250,7 @@ public class PatchResidentRequest {
 ### 10) Method parameter validation
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.Exists;
+import io.github.jpa_labs.jpafieldconstraints.Exists;
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -275,7 +275,7 @@ class AssignmentController {
 ### 11) Type-level `@Exists` with `dtoField`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.Exists;
+import io.github.jpa_labs.jpafieldconstraints.Exists;
 
 @Exists(entity = Department.class, column = "code", dtoField = "departmentCode")
 public class TransferRequest {
@@ -286,7 +286,7 @@ public class TransferRequest {
 ### 12) Type-level `@AllExists` with `dtoField`
 
 ```java
-import io.github.jpa_labs.jpafieldconstraints.validation.AllExists;
+import io.github.jpa_labs.jpafieldconstraints.AllExists;
 import java.util.List;
 import java.util.UUID;
 
