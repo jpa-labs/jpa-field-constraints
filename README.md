@@ -1,4 +1,4 @@
-# uniquefield-spring
+# jpa-field-constraints
 
 Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@UniqueField`, `@UniqueFields`, `@Exists`, and `@AllExists` for Spring Boot 3 with Hibernate / JPA.
 
@@ -6,12 +6,12 @@ Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@U
 - **Runtime**: validators are Spring beans (EntityManager is injected); auto-configuration registers them.
 - **Optional APT**: add the same coordinates as `annotationProcessor` so invalid annotation config fails at **compile time** (not only when constraints initialize at runtime).
 
-Maven coordinates (artifact id `uniquefield-spring`, Java packages `io.github.jpa_labs.uniquefield.*`):
+Maven coordinates (artifact id `jpa-field-constraints`, Java packages `io.github.jpa_labs.jpafieldconstraints.*`):
 
 | Source | `groupId` | `artifactId` | Version |
 |--------|-----------|--------------|---------|
-| [JitPack](https://jitpack.io/#jpa-labs/uniquefield-spring) | `com.github.jpa-labs` | `uniquefield-spring` | Git tag or commit hash |
-| GitHub Packages | `com.github.jpa-labs` | `uniquefield-spring` | Release tag (see workflow) |
+| [JitPack](https://jitpack.io/#jpa-labs/jpa-field-constraints) | `com.github.jpa-labs` | `jpa-field-constraints` | Git tag or commit hash |
+| GitHub Packages | `com.github.jpa-labs` | `jpa-field-constraints` | Release tag (see workflow) |
 
 ## Gradle
 
@@ -24,8 +24,8 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.github.jpa-labs:uniquefield-spring:TAG_OR_COMMIT'
-    annotationProcessor 'com.github.jpa-labs:uniquefield-spring:TAG_OR_COMMIT' // optional, recommended
+    implementation 'com.github.jpa-labs:jpa-field-constraints:TAG_OR_COMMIT'
+    annotationProcessor 'com.github.jpa-labs:jpa-field-constraints:TAG_OR_COMMIT' // optional, recommended
 }
 ```
 
@@ -36,7 +36,7 @@ gpr.user=GITHUB_USERNAME
 gpr.key=GITHUB_TOKEN_OR_PAT
 ```
 
-Repository URL: `https://maven.pkg.github.com/jpa-labs/uniquefield-spring` (see `build.gradle` `publishing`).
+Repository URL: `https://maven.pkg.github.com/jpa-labs/jpa-field-constraints` (see `build.gradle` `publishing`).
 
 Publishing from CI is handled by `.github/workflows/gradle-publish.yml` (on GitHub Release; `VERSION` is taken from the release tag).
 
@@ -54,7 +54,7 @@ JitPack:
 
 <dependency>
   <groupId>com.github.jpa-labs</groupId>
-  <artifactId>uniquefield-spring</artifactId>
+  <artifactId>jpa-field-constraints</artifactId>
   <version>TAG_OR_COMMIT</version>
 </dependency>
 ```
@@ -121,7 +121,7 @@ public class AssignRolesRequest {
 - `.github/workflows/ci.yml` — build on push / pull request to `main` or `master`.
 - `.github/workflows/gradle-publish.yml` — publish to GitHub Packages on release (and manual dispatch).
 
-[JitPack](https://jitpack.io/#jpa-labs/uniquefield-spring) builds use `jitpack.yml` (OpenJDK 17); version for Gradle is supplied by JitPack via the `VERSION` environment variable when applicable.
+[JitPack](https://jitpack.io/#jpa-labs/jpa-field-constraints) builds use `jitpack.yml` (OpenJDK 17); version for Gradle is supplied by JitPack via the `VERSION` environment variable when applicable.
 
 ## License
 

@@ -4,8 +4,8 @@ plugins {
     id 'jacoco'
 }
 
-// JitPack artifact: com.github.jpa-labs:uniquefield-spring:TAG (see https://jitpack.io/#jpa-labs/uniquefield-spring)
-// Java packages remain io.github.jpa_labs.uniquefield.*
+// JitPack artifact: com.github.jpa-labs:jpa-field-constraints:TAG (see https://jitpack.io/#jpa-labs/jpa-field-constraints)
+// Java packages remain io.github.jpa_labs.jpafieldconstraints.*
 group = 'com.github.jpa-labs'
 
 def envVersion = System.getenv('VERSION')
@@ -59,13 +59,13 @@ publishing {
         maven(MavenPublication) {
             from components.java
             groupId = project.group.toString()
-            artifactId = 'uniquefield-spring'
+            artifactId = 'jpa-field-constraints'
             version = project.version.toString()
             pom {
-                name = 'uniquefield-spring'
+                name = 'jpa-field-constraints'
                 description =
                     'JPA-backed Bean Validation @UniqueField / @UniqueFields for Spring Boot (runtime + optional annotation processor).'
-                url = 'https://github.com/jpa-labs/uniquefield-spring'
+                url = 'https://github.com/jpa-labs/jpa-field-constraints'
                 licenses {
                     license {
                         name = 'The Apache License, Version 2.0'
@@ -78,7 +78,7 @@ publishing {
     repositories {
         maven {
             name = 'GitHubPackages'
-            url = uri('https://maven.pkg.github.com/jpa-labs/uniquefield-spring')
+            url = uri('https://maven.pkg.github.com/jpa-labs/jpa-field-constraints')
             credentials {
                 username =
                     System.getenv('GITHUB_ACTOR')

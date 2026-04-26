@@ -1,1 +1,1 @@
-io.github.jpa_labs.uniquefield.apt.UniqueConstraintAnnotationProcessor,isolating
+io.github.jpa_labs.jpafieldconstraints.apt.UniqueConstraintAnnotationProcessor,isolating
