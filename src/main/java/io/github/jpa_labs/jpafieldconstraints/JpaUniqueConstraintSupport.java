@@ -16,6 +16,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
+import java.util.UUID;
 
 final class JpaUniqueConstraintSupport {
 
@@ -66,6 +67,26 @@ final class JpaUniqueConstraintSupport {
       boolean ignoreCase,
       Object excludeEntityId,
       String entityIdProperty) {
+    return countRowsEqual(
+        entityManager,
+        entityClass,
+        attributePath,
+        value,
+        ignoreCase,
+        new EqualityQueryOptions(excludeEntityId, entityIdProperty, List.of()));
+  }
+
+  /**
+   * @param excludeEntityId when non-null, rows whose {@code entityIdProperty} equals this id are
+   *     ignored (update / same-row semantics)
+   */
+  static long countRowsEqual(
+      EntityManager entityManager,
+      Class<?> entityClass,
+      String attributePath,
+      Object value,
+      boolean ignoreCase,
+      EqualityQueryOptions options) {
     validateAttributePath(entityManager, entityClass, attributePath);
     CriteriaBuilder cb = entityManager.getCriteriaBuilder();
     CriteriaQuery<Long> cq = cb.createQuery(Long.class);
@@ -74,9 +95,18 @@ final class JpaUniqueConstraintSupport {
     Path<?> path = resolvePath(root, attributePath);
     List<Predicate> predicates = new ArrayList<>();
     predicates.add(buildEqualsPredicate(cb, path, value, ignoreCase));
-    if (excludeEntityId != null) {
-      Path<?> idPath = root.get(entityIdProperty);
-      predicates.add(cb.notEqual(idPath, excludeEntityId));
+    List<StaticEqualsFilter> additionalFilters = options.additionalFilters();
+    if (additionalFilters != null && !additionalFilters.isEmpty()) {
+      for (StaticEqualsFilter filter : additionalFilters) {
+        validateAttributePath(entityManager, entityClass, filter.attributePath());
+        Path<?> filterPath = resolvePath(root, filter.attributePath());
+        Object typedLiteral = coerceLiteral(filter.value(), filterPath.getJavaType(), filter.attributePath());
+        predicates.add(buildEqualsPredicate(cb, filterPath, typedLiteral, filter.ignoreCase()));
+      }
+    }
+    if (options.excludeEntityId() != null) {
+      Path<?> idPath = root.get(options.entityIdProperty());
+      predicates.add(cb.notEqual(idPath, options.excludeEntityId()));
     }
     cq.select(cb.count(root)).where(predicates.toArray(Predicate[]::new));
     return entityManager.createQuery(cq).getSingleResult();
@@ -153,4 +183,78 @@ final class JpaUniqueConstraintSupport {
     }
     return false;
   }
+
+  /**
+   * Coerces {@link Exists.Where#value()} into the target JPA attribute type.
+   *
+   * <p>Supported target types are:
+   *
+   * <ul>
+   *   <li>{@link String}
+   *   <li>{@link Boolean}/{@code boolean}
+   *   <li>numeric primitives and wrappers: {@code byte}/{@link Byte}, {@code short}/{@link Short},
+   *       {@code int}/{@link Integer}, {@code long}/{@link Long}, {@code float}/{@link Float},
+   *       {@code double}/{@link Double}
+   *   <li>{@link Character}/{@code char}
+   *   <li>{@link UUID}
+   *   <li>enums (via {@link #parseEnumLiteral(Class, String)})
+   * </ul>
+   *
+   * <p>Date/time types ({@code LocalDate}, {@code LocalDateTime}, {@code Instant}) are currently
+   * unsupported. {@code BigInteger}/{@code BigDecimal} are also not yet supported.
+   *
+   * <p>This method throws {@link IllegalArgumentException} when a target type is unsupported.
+   * Extend this method to add support for additional literal coercions.
+   */
+  private static Object coerceLiteral(String literal, Class<?> targetType, String attributePath) {
+    if (targetType == String.class) {
+      return literal;
+    }
+    if (targetType == Boolean.class || targetType == boolean.class) {
+      return Boolean.parseBoolean(literal);
+    }
+    if (targetType == Byte.class || targetType == byte.class) {
+      return Byte.parseByte(literal);
+    }
+    if (targetType == Character.class || targetType == char.class) {
+      if (literal.length() != 1) {
+        throw new IllegalArgumentException(
+            "where.value must be a single character for attribute '" + attributePath + "'");
+      }
+      return literal.charAt(0);
+    }
+    if (targetType == Integer.class || targetType == int.class) {
+      return Integer.parseInt(literal);
+    }
+    if (targetType == Long.class || targetType == long.class) {
+      return Long.parseLong(literal);
+    }
+    if (targetType == Short.class || targetType == short.class) {
+      return Short.parseShort(literal);
+    }
+    if (targetType == Double.class || targetType == double.class) {
+      return Double.parseDouble(literal);
+    }
+    if (targetType == Float.class || targetType == float.class) {
+      return Float.parseFloat(literal);
+    }
+    if (targetType == UUID.class) {
+      return UUID.fromString(literal);
+    }
+    if (Enum.class.isAssignableFrom(targetType)) {
+      return parseEnumLiteral(targetType, literal);
+    }
+    throw new IllegalArgumentException(
+        "Unsupported where.value type '" + targetType.getName() + "' for attribute '" + attributePath + "'");
+  }
+
+  @SuppressWarnings({"unchecked"})
+  private static <E extends Enum<E>> E parseEnumLiteral(Class<?> enumType, String literal) {
+    return Enum.valueOf((Class<E>) enumType.asSubclass(Enum.class), literal);
+  }
+
+  record EqualityQueryOptions(
+      Object excludeEntityId, String entityIdProperty, List<StaticEqualsFilter> additionalFilters) {}
+
+  record StaticEqualsFilter(String attributePath, String value, boolean ignoreCase) {}
 }

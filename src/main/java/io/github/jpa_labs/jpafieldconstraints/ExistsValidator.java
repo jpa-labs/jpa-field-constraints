@@ -4,6 +4,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
+import java.util.ArrayList;
+import java.util.List;
 import org.springframework.beans.BeanWrapperImpl;
 import org.springframework.stereotype.Component;
 
@@ -18,6 +20,7 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
   private boolean ignoreCase;
   private String dtoField;
   private boolean typeLevel;
+  private List<JpaUniqueConstraintSupport.StaticEqualsFilter> whereFilters;
 
   @Override
   public void initialize(Exists constraintAnnotation) {
@@ -28,6 +31,7 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
     this.ignoreCase = constraintAnnotation.ignoreCase();
     this.dtoField = nullToEmpty(constraintAnnotation.dtoField());
     UniqueConstraintPathSecurity.assertJpaAttributePath(this.attributePath, "column");
+    this.whereFilters = buildWhereFilters(constraintAnnotation.where());
     this.typeLevel = !this.dtoField.isBlank();
     if (this.typeLevel) {
       UniqueConstraintPathSecurity.assertDtoPropertyPath(this.dtoField, "dtoField");
@@ -48,7 +52,12 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
     }
     long count =
         JpaUniqueConstraintSupport.countRowsEqual(
-            entityManager, entityClass, attributePath, value, ignoreCase, null, "id");
+            entityManager,
+            entityClass,
+            attributePath,
+            value,
+            ignoreCase,
+            new JpaUniqueConstraintSupport.EqualityQueryOptions(null, "id", whereFilters));
     return count > 0;
   }
 
@@ -63,7 +72,12 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
     }
     long count =
         JpaUniqueConstraintSupport.countRowsEqual(
-            entityManager, entityClass, attributePath, fieldValue, ignoreCase, null, "id");
+            entityManager,
+            entityClass,
+            attributePath,
+            fieldValue,
+            ignoreCase,
+            new JpaUniqueConstraintSupport.EqualityQueryOptions(null, "id", whereFilters));
     if (count == 0) {
       context.disableDefaultConstraintViolation();
       context
@@ -73,5 +87,24 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
       return false;
     }
     return true;
+  }
+
+  private List<JpaUniqueConstraintSupport.StaticEqualsFilter> buildWhereFilters(Exists.Where[] where) {
+    if (where == null || where.length == 0) {
+      return List.of();
+    }
+    List<JpaUniqueConstraintSupport.StaticEqualsFilter> filters = new ArrayList<>();
+    for (Exists.Where clause : where) {
+      String whereColumn = nullToEmpty(clause.column());
+      String whereValue = nullToEmpty(clause.value());
+      UniqueConstraintPathSecurity.assertJpaAttributePath(whereColumn, "where.column");
+      if (whereValue.isBlank()) {
+        throw new IllegalArgumentException("where.value must not be blank");
+      }
+      filters.add(
+          new JpaUniqueConstraintSupport.StaticEqualsFilter(
+              whereColumn, whereValue, clause.ignoreCase()));
+    }
+    return List.copyOf(filters);
   }
 }

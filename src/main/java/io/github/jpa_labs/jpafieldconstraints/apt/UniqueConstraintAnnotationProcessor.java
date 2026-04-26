@@ -342,6 +342,7 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
     }
     try {
       UniqueConstraintStaticRules.validateJpaAttributePath(p.column, "column");
+      validateExistsWhereClauses(p.whereClauses);
     } catch (IllegalArgumentException ex) {
       printError(element, ex.getMessage());
       return;
@@ -521,10 +522,62 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
         }
         case "column" -> p.column = v instanceof String s ? s : null;
         case "dtoField" -> p.dtoField = v instanceof String s ? s : null;
+        case "where" -> p.whereClauses = parseExistsWhereClauses(v);
         default -> {}
       }
     }
     return p;
+  }
+
+  private List<ParsedExistsWhere> parseExistsWhereClauses(Object value) {
+    if (!(value instanceof List<?> list) || list.isEmpty()) {
+      return List.of();
+    }
+    List<ParsedExistsWhere> clauses = new java.util.ArrayList<>();
+    for (Object item : list) {
+      if (!(item instanceof AnnotationValue annotationValue)) {
+        continue;
+      }
+      Object raw = annotationValue.getValue();
+      if (!(raw instanceof AnnotationMirror clauseMirror)) {
+        continue;
+      }
+      clauses.add(parseExistsWhereClause(clauseMirror));
+    }
+    return List.copyOf(clauses);
+  }
+
+  private ParsedExistsWhere parseExistsWhereClause(AnnotationMirror clauseMirror) {
+    Map<? extends ExecutableElement, ? extends AnnotationValue> map =
+        processingEnv.getElementUtils().getElementValuesWithDefaults(clauseMirror);
+    ParsedExistsWhere clause = new ParsedExistsWhere();
+    for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> e : map.entrySet()) {
+      String key = e.getKey().getSimpleName().toString();
+      Object v = e.getValue().getValue();
+      switch (key) {
+        case "column" -> clause.column = v instanceof String s ? s : null;
+        case "value" -> clause.value = v instanceof String s ? s : null;
+        case "ignoreCase" -> clause.ignoreCase = v instanceof Boolean b && b;
+        default -> {}
+      }
+    }
+    return clause;
+  }
+
+  private void validateExistsWhereClauses(List<ParsedExistsWhere> clauses) {
+    if (clauses == null || clauses.isEmpty()) {
+      return;
+    }
+    for (ParsedExistsWhere clause : clauses) {
+      UniqueConstraintStaticRules.validateJpaAttributePath(clause.column, "where.column");
+      String value = clause.value == null ? "" : clause.value.trim();
+      if (clause.ignoreCase && value.isEmpty()) {
+        throw new IllegalArgumentException("where.value must not be blank");
+      }
+      if (value.isBlank()) {
+        throw new IllegalArgumentException("where.value must not be blank");
+      }
+    }
   }
 
   private ParsedAllExists parseAllExistsMirror(AnnotationMirror am) {
@@ -564,6 +617,13 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
     TypeMirror entityType;
     String column;
     String dtoField;
+    List<ParsedExistsWhere> whereClauses = List.of();
+  }
+
+  private static final class ParsedExistsWhere {
+    String column;
+    String value;
+    boolean ignoreCase;
   }
 
   private static final class ParsedAllExists {
