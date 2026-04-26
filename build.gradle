@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'jacoco'
 }
 
 // JitPack artifact: com.github.jpa-labs:uniquefield-spring:TAG (see https://jitpack.io/#jpa-labs/uniquefield-spring)
@@ -41,6 +42,16 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    finalizedBy tasks.named('jacocoTestReport')
+}
+
+tasks.named('jacocoTestReport') {
+    dependsOn tasks.named('test')
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
 
 publishing {

@@ -46,7 +46,7 @@ class UniqueFieldValidatorIntegrationTest {
       var dto = new SampleDto("taken");
       Set<ConstraintViolation<SampleDto>> violations = validator.validate(dto);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("code");
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
     }
   }
 
@@ -66,7 +66,7 @@ class UniqueFieldValidatorIntegrationTest {
       var dto = new TypeLevelUpdateDto(UUID.randomUUID(), "shared");
       Set<ConstraintViolation<TypeLevelUpdateDto>> violations = validator.validate(dto);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("code");
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
     }
   }
 
@@ -90,6 +90,15 @@ class UniqueFieldValidatorIntegrationTest {
       var dto = new MultiUniqueFieldsDto("c2", "s2");
       assertThat(validator.validate(dto)).isEmpty();
     }
+
+    @Test
+    void oneRuleViolatesAndOnePasses() {
+      repository.save(new SampleEntity(null, "c1", "s1"));
+      var dto = new MultiUniqueFieldsDto("c1", "s2");
+      Set<ConstraintViolation<MultiUniqueFieldsDto>> violations = validator.validate(dto);
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
+    }
   }
 
   @Nested
@@ -108,7 +117,16 @@ class UniqueFieldValidatorIntegrationTest {
       var dto = new TypeLevelIgnoreCaseDto("mixedcase");
       Set<ConstraintViolation<TypeLevelIgnoreCaseDto>> violations = validator.validate(dto);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("code");
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
+    }
+
+    @Test
+    void fieldLevelIgnoreCaseDetectsDuplicate() {
+      repository.save(new SampleEntity(null, "FieldMixed", null));
+      Set<ConstraintViolation<FieldLevelIgnoreCaseDto>> violations =
+          validator.validate(new FieldLevelIgnoreCaseDto("fieldmixed"));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
     }
   }
 
@@ -134,7 +152,7 @@ class UniqueFieldValidatorIntegrationTest {
       var dto = new NestedHolderDto(new NestedCode("nested-val"));
       Set<ConstraintViolation<NestedHolderDto>> violations = validator.validate(dto);
       assertThat(violations).hasSize(1);
-      assertThat(violations.iterator().next().getPropertyPath().toString()).isEqualTo("inner.code");
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("inner.code");
     }
   }
 
@@ -238,6 +256,20 @@ class UniqueFieldValidatorIntegrationTest {
     private final String code;
 
     TypeLevelIgnoreCaseDto(String code) {
+      this.code = code;
+    }
+
+    public String getCode() {
+      return code;
+    }
+  }
+
+  static class FieldLevelIgnoreCaseDto {
+
+    @UniqueField(entity = SampleEntity.class, column = "code", ignoreCase = true)
+    private final String code;
+
+    FieldLevelIgnoreCaseDto(String code) {
       this.code = code;
     }
 

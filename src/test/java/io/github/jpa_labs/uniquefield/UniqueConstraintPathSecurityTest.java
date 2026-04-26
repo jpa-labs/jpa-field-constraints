@@ -44,4 +44,62 @@ class UniqueConstraintPathSecurityTest {
     assertThatCode(() -> UniqueConstraintPathSecurity.assertJpaEntityClass(SampleEntity.class))
         .doesNotThrowAnyException();
   }
+
+  @Test
+  void rejectsUnsafeDtoPathSegment() {
+    assertThatThrownBy(
+            () -> UniqueConstraintPathSecurity.assertDtoPropertyPath("holder.class.name", "dtoField"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unsafe");
+  }
+
+  @Test
+  void rejectsCompositeEntityIdPropertyName() {
+    assertThatThrownBy(
+            () -> UniqueConstraintPathSecurity.assertEntityIdPropertyName("id.value", "entityIdProperty"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("single property name");
+  }
+
+  @Test
+  void rejectsUnsafeEntityIdPropertyName() {
+    assertThatThrownBy(
+            () -> UniqueConstraintPathSecurity.assertEntityIdPropertyName("class", "entityIdProperty"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unsafe");
+  }
+
+  @Test
+  void rejectsNullAndArrayEntityClass() {
+    assertThatThrownBy(() -> UniqueConstraintPathSecurity.assertJpaEntityClass(null))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be null");
+
+    assertThatThrownBy(() -> UniqueConstraintPathSecurity.assertJpaEntityClass(SampleEntity[].class))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("non-array reference type");
+  }
+
+  @Test
+  void rejectsInvalidJpaAttributePathShape() {
+    assertThatThrownBy(
+            () -> UniqueConstraintPathSecurity.assertJpaAttributePath("bad-path", "column"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid");
+  }
+
+  @Test
+  void rejectsBlankJpaAttributePath() {
+    assertThatThrownBy(() -> UniqueConstraintPathSecurity.assertJpaAttributePath(" ", "column"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be blank");
+  }
+
+  @Test
+  void rejectsInvalidEntityIdPropertyShape() {
+    assertThatThrownBy(
+            () -> UniqueConstraintPathSecurity.assertEntityIdPropertyName("id-value", "entityIdProperty"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid entityIdProperty");
+  }
 }

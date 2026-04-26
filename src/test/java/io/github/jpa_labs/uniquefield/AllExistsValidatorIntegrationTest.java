@@ -1,6 +1,7 @@
 package io.github.jpa_labs.uniquefield;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
@@ -79,6 +80,46 @@ class AllExistsValidatorIntegrationTest {
       assertThat(violations).hasSize(1);
       assertThat(violations.iterator().next().getPropertyPath()).hasToString("codes");
     }
+
+    @Test
+    void failsWhenIgnoreCaseEnabledWithNonStringItem() {
+      String v1 = "ax-" + UUID.randomUUID();
+      repository.save(new SampleEntity(null, v1, null));
+      Set<ConstraintViolation<MixedTypeIgnoreCaseDto>> violations =
+          validator.validate(new MixedTypeIgnoreCaseDto(Arrays.asList(v1, 42)));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("values");
+    }
+
+    @Test
+    void allowsNullCollectionWhenIgnoreNullOrEmptyEnabled() {
+      Set<ConstraintViolation<FieldListDto>> violations = validator.validate(new FieldListDto(null));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
+    void rejectsNullCollectionWhenIgnoreNullOrEmptyDisabled() {
+      Set<ConstraintViolation<StrictFieldListDto>> violations = validator.validate(new StrictFieldListDto(null));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("codes");
+    }
+
+    @Test
+    void rejectsNonIterableFieldValue() {
+      Set<ConstraintViolation<FieldNonIterableDto>> violations =
+          validator.validate(new FieldNonIterableDto("not-iterable"));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("value");
+    }
+
+    @Test
+    void failsWhenEntityColumnPathHasInvalidMidSegmentType() {
+      InvalidEntityPathListDto dto = new InvalidEntityPathListDto(List.of("x"));
+      assertThatThrownBy(() -> validator.validate(dto))
+          .rootCause()
+          .isInstanceOf(IllegalArgumentException.class)
+          .hasMessageContaining("must be an association or embeddable");
+    }
   }
 
   @Nested
@@ -111,6 +152,14 @@ class AllExistsValidatorIntegrationTest {
           validator.validate(new TypeLevelNonIterableDto("not-a-list"));
       assertThat(violations).hasSize(1);
       assertThat(violations.iterator().next().getPropertyPath()).hasToString("inner.value");
+    }
+
+    @Test
+    void rejectsNullTypeLevelSourceWhenIgnoreNullOrEmptyDisabled() {
+      Set<ConstraintViolation<StrictTypeLevelDto>> violations =
+          validator.validate(new StrictTypeLevelDto(new InnerCodes(null)));
+      assertThat(violations).hasSize(1);
+      assertThat(violations.iterator().next().getPropertyPath()).hasToString("inner.codes");
     }
   }
 
@@ -156,11 +205,70 @@ class AllExistsValidatorIntegrationTest {
     }
   }
 
+  static class MixedTypeIgnoreCaseDto {
+
+    @AllExists(entity = SampleEntity.class, column = "code", ignoreCase = true)
+    private final List<Object> values;
+
+    MixedTypeIgnoreCaseDto(List<Object> values) {
+      this.values = values;
+    }
+
+    public List<Object> getValues() {
+      return values;
+    }
+  }
+
+  static class FieldNonIterableDto {
+
+    @AllExists(entity = SampleEntity.class, column = "code")
+    private final String value;
+
+    FieldNonIterableDto(String value) {
+      this.value = value;
+    }
+
+    public String getValue() {
+      return value;
+    }
+  }
+
+  static class InvalidEntityPathListDto {
+
+    @AllExists(entity = SampleEntity.class, column = "code.inner")
+    private final List<String> values;
+
+    InvalidEntityPathListDto(List<String> values) {
+      this.values = values;
+    }
+
+    public List<String> getValues() {
+      return values;
+    }
+  }
+
   @AllExists(entity = SampleEntity.class, column = "code", dtoField = "inner.codes")
   static class TypeLevelDto {
     private final InnerCodes inner;
 
     TypeLevelDto(InnerCodes inner) {
+      this.inner = inner;
+    }
+
+    public InnerCodes getInner() {
+      return inner;
+    }
+  }
+
+  @AllExists(
+      entity = SampleEntity.class,
+      column = "code",
+      dtoField = "inner.codes",
+      ignoreNullOrEmpty = false)
+  static class StrictTypeLevelDto {
+    private final InnerCodes inner;
+
+    StrictTypeLevelDto(InnerCodes inner) {
       this.inner = inner;
     }
 

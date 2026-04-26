@@ -68,6 +68,30 @@ class UniqueFieldsValidatorIntegrationTest {
         .hasMessageContaining("Unsafe");
   }
 
+  @Test
+  void initializeRejectsBlankColumn() {
+    assertThatThrownBy(() -> validator.validate(new BlankColumnRuleDto()))
+        .rootCause()
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("column must not be blank");
+  }
+
+  @Test
+  void initializeRejectsBlankEntityIdProperty() {
+    assertThatThrownBy(() -> validator.validate(new BlankEntityIdPropertyDto()))
+        .rootCause()
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("must not be blank");
+  }
+
+  @Test
+  void initializeRejectsUnsafeExcludeIdPath() {
+    assertThatThrownBy(() -> validator.validate(new UnsafeExcludePathDto()))
+        .rootCause()
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Unsafe");
+  }
+
   @UniqueFields(
       value = {
         @UniqueField(entity = SampleEntity.class, column = "code", dtoField = ""),
@@ -120,4 +144,33 @@ class UniqueFieldsValidatorIntegrationTest {
             entityIdProperty = "class"),
       })
   static class EntityIdNamedClassDto {}
+
+  @UniqueFields(
+      value = {
+        @UniqueField(entity = SampleEntity.class, column = "", dtoField = "code"),
+      })
+  static class BlankColumnRuleDto {}
+
+  @UniqueFields(
+      value = {
+        @UniqueField(
+            entity = SampleEntity.class,
+            column = "code",
+            dtoField = "code",
+            entityIdProperty = ""),
+      })
+  static class BlankEntityIdPropertyDto {}
+
+  @UniqueFields(
+      value = {
+        @UniqueField(
+            entity = SampleEntity.class,
+            column = "code",
+            dtoField = "code",
+            excludeIdDtoField = "holder.class.name"),
+      })
+  static class UnsafeExcludePathDto {
+    @SuppressWarnings("unused")
+    private final Object holder = new Object();
+  }
 }
