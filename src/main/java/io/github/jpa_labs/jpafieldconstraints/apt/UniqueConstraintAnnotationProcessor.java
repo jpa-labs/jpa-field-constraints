@@ -557,6 +557,7 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
       switch (key) {
         case "column" -> clause.column = v instanceof String s ? s : null;
         case "value" -> clause.value = v instanceof String s ? s : null;
+        case "ignoreCase" -> clause.ignoreCase = v instanceof Boolean b && b;
         default -> {}
       }
     }
@@ -570,6 +571,9 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
     for (ParsedExistsWhere clause : clauses) {
       UniqueConstraintStaticRules.validateJpaAttributePath(clause.column, "where.column");
       String value = clause.value == null ? "" : clause.value.trim();
+      if (clause.ignoreCase && value.isEmpty()) {
+        throw new IllegalArgumentException("where.value must not be blank");
+      }
       if (value.isBlank()) {
         throw new IllegalArgumentException("where.value must not be blank");
       }
@@ -619,6 +623,7 @@ public class UniqueConstraintAnnotationProcessor extends AbstractProcessor {
   private static final class ParsedExistsWhere {
     String column;
     String value;
+    boolean ignoreCase;
   }
 
   private static final class ParsedAllExists {

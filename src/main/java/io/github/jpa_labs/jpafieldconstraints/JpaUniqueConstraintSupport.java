@@ -184,12 +184,44 @@ final class JpaUniqueConstraintSupport {
     return false;
   }
 
+  /**
+   * Coerces {@link Exists.Where#value()} into the target JPA attribute type.
+   *
+   * <p>Supported target types are:
+   *
+   * <ul>
+   *   <li>{@link String}
+   *   <li>{@link Boolean}/{@code boolean}
+   *   <li>numeric primitives and wrappers: {@code byte}/{@link Byte}, {@code short}/{@link Short},
+   *       {@code int}/{@link Integer}, {@code long}/{@link Long}, {@code float}/{@link Float},
+   *       {@code double}/{@link Double}
+   *   <li>{@link Character}/{@code char}
+   *   <li>{@link UUID}
+   *   <li>enums (via {@link #parseEnumLiteral(Class, String)})
+   * </ul>
+   *
+   * <p>Date/time types ({@code LocalDate}, {@code LocalDateTime}, {@code Instant}) are currently
+   * unsupported. {@code BigInteger}/{@code BigDecimal} are also not yet supported.
+   *
+   * <p>This method throws {@link IllegalArgumentException} when a target type is unsupported.
+   * Extend this method to add support for additional literal coercions.
+   */
   private static Object coerceLiteral(String literal, Class<?> targetType, String attributePath) {
     if (targetType == String.class) {
       return literal;
     }
     if (targetType == Boolean.class || targetType == boolean.class) {
       return Boolean.parseBoolean(literal);
+    }
+    if (targetType == Byte.class || targetType == byte.class) {
+      return Byte.parseByte(literal);
+    }
+    if (targetType == Character.class || targetType == char.class) {
+      if (literal.length() != 1) {
+        throw new IllegalArgumentException(
+            "where.value must be a single character for attribute '" + attributePath + "'");
+      }
+      return literal.charAt(0);
     }
     if (targetType == Integer.class || targetType == int.class) {
       return Integer.parseInt(literal);

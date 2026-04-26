@@ -90,10 +90,10 @@ class ExistsValidator implements ConstraintValidator<Exists, Object> {
   }
 
   private List<JpaUniqueConstraintSupport.StaticEqualsFilter> buildWhereFilters(Exists.Where[] where) {
-    List<JpaUniqueConstraintSupport.StaticEqualsFilter> filters = new ArrayList<>();
     if (where == null || where.length == 0) {
       return List.of();
     }
+    List<JpaUniqueConstraintSupport.StaticEqualsFilter> filters = new ArrayList<>();
     for (Exists.Where clause : where) {
       String whereColumn = nullToEmpty(clause.column());
       String whereValue = nullToEmpty(clause.value());
