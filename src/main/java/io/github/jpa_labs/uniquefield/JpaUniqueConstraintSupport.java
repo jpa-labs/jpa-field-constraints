@@ -93,19 +93,18 @@ final class JpaUniqueConstraintSupport {
       return 0;
     }
     CriteriaBuilder cb = entityManager.getCriteriaBuilder();
-    CriteriaQuery<Object> cq = cb.createQuery(Object.class);
+    CriteriaQuery<Long> cq = cb.createQuery(Long.class);
     @SuppressWarnings("unchecked")
     Root<Object> root = (Root<Object>) cq.from(entityClass);
     Path<?> path = resolvePath(root, attributePath);
     Predicate predicate = buildInPredicate(cb, path, values, ignoreCase);
-    Expression<?> selectExpr =
+    Expression<?> countExpr =
         ignoreCase && path.getJavaType() == String.class ? cb.lower(path.as(String.class)) : path;
-    cq.select((Expression<Object>) selectExpr).distinct(true).where(predicate);
-    List<Object> rows = entityManager.createQuery(cq).getResultList();
-    return rows.size();
+    cq.select(cb.countDistinct(countExpr)).where(predicate);
+    return entityManager.createQuery(cq).getSingleResult();
   }
 
-  @SuppressWarnings({"rawtypes", "unchecked"})
+  @SuppressWarnings("unchecked")
   private static Predicate buildEqualsPredicate(
       CriteriaBuilder cb, Path<?> path, Object value, boolean ignoreCase) {
     if (ignoreCase && value instanceof String s) {
@@ -126,7 +125,6 @@ final class JpaUniqueConstraintSupport {
     return current;
   }
 
-  @SuppressWarnings("unchecked")
   private static Predicate buildInPredicate(
       CriteriaBuilder cb, Path<?> path, Set<Object> values, boolean ignoreCase) {
     if (ignoreCase && path.getJavaType() == String.class) {

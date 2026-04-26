@@ -46,10 +46,10 @@ class AllExistsValidator implements ConstraintValidator<AllExists, Object> {
       source = new BeanWrapperImpl(value).getPropertyValue(dtoField);
     }
     if (source == null) {
-      return ignoreNullOrEmpty;
+      return ignoreNullOrEmpty || fail(context);
     }
     if (!(source instanceof Iterable<?> iterable)) {
-      return false;
+      return fail(context);
     }
     Set<Object> normalized = normalizeValues(iterable);
     if (normalized.isEmpty()) {
@@ -61,14 +61,7 @@ class AllExistsValidator implements ConstraintValidator<AllExists, Object> {
     if (matched == normalized.size()) {
       return true;
     }
-    if (typeLevel) {
-      context.disableDefaultConstraintViolation();
-      context
-          .buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
-          .addPropertyNode(dtoField)
-          .addConstraintViolation();
-    }
-    return false;
+    return fail(context);
   }
 
   private Set<Object> normalizeValues(Iterable<?> iterable) {
@@ -87,5 +80,16 @@ class AllExistsValidator implements ConstraintValidator<AllExists, Object> {
 
   private static String nullToEmpty(String s) {
     return s == null ? "" : s;
+  }
+
+  private boolean fail(ConstraintValidatorContext context) {
+    if (typeLevel) {
+      context.disableDefaultConstraintViolation();
+      context
+          .buildConstraintViolationWithTemplate(context.getDefaultConstraintMessageTemplate())
+          .addPropertyNode(dtoField)
+          .addConstraintViolation();
+    }
+    return false;
   }
 }
