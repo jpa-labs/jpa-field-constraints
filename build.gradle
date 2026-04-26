@@ -55,6 +55,10 @@ tasks.named('jacocoTestReport') {
     }
 }
 
+tasks.withType(org.gradle.api.publish.tasks.GenerateModuleMetadata).configureEach {
+    suppressedValidationErrors.add('dependencies-without-versions')
+}
+
 publishing {
     publications {
         maven(MavenPublication) {
