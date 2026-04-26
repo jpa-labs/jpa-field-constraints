@@ -1,8 +1,12 @@
 # jpa-field-constraints
 
-Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@UniqueField`, `@UniqueFields`, `@Exists`, and `@AllExists` for Spring Boot 3 with Hibernate / JPA.
+[![CI](https://github.com/jpa-labs/jpa-field-constraints/actions/workflows/ci.yml/badge.svg)](https://github.com/jpa-labs/jpa-field-constraints/actions/workflows/ci.yml)
+![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.x%20%7C%204.0.x-6DB33F)
+![Java](https://img.shields.io/badge/Java-17-007396)
 
-- **Java 17**, Spring Boot 3.x (BOM aligned in this repo to 3.5.x).
+Jakarta Bean Validation constraints for **JPA-backed field checks** on DTOs: `@UniqueField`, `@UniqueFields`, `@Exists`, and `@AllExists` for Spring Boot with Hibernate / JPA.
+
+- **Java 17**, tested against Spring Boot **3.5.x** and **4.0.x**.
 - **Runtime**: validators are Spring beans (EntityManager is injected); auto-configuration registers them.
 - **Optional APT**: add the same coordinates as `annotationProcessor` so invalid annotation config fails at **compile time** (not only when constraints initialize at runtime).
 
@@ -65,6 +69,8 @@ Add the same artifact as `annotationProcessor` scope if you want compile-time ch
 
 Ensure **`spring-boot-starter-data-jpa`** (or equivalent) and validation are on the classpath. Auto-configuration imports the validators.
 
+This library keeps Spring dependencies as compile-only and relies on the consuming application's BOM/dependency management, so the same artifact can be used with supported Spring Boot lines.
+
 **Single property** — annotate the field (or method / parameter); `entity` must be a JPA `@Entity` class; `column` is the **entity JavaBean property path** (e.g. nested `basicInfo.fanNumber`):
 
 ```java
@@ -116,9 +122,16 @@ public class AssignRolesRequest {
 ./gradlew build
 ```
 
+Run tests against a specific Spring Boot line:
+
+```bash
+./gradlew clean test -PbootVersion=3.5.4
+./gradlew clean test -PbootVersion=4.0.0
+```
+
 ## CI
 
-- `.github/workflows/ci.yml` — build on push / pull request to `main` or `master`.
+- `.github/workflows/ci.yml` — build/test on push / pull request to `main` or `master` using a Boot version matrix (3.5.x and 4.0.x).
 - `.github/workflows/gradle-publish.yml` — publish to GitHub Packages on release (and manual dispatch).
 
 [JitPack](https://jitpack.io/#jpa-labs/jpa-field-constraints) builds use `jitpack.yml` (OpenJDK 17); version for Gradle is supplied by JitPack via the `VERSION` environment variable when applicable.

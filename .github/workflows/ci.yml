@@ -11,6 +11,10 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        bootVersion: ['3.5.4', '4.0.0']
     permissions:
       contents: read
 
@@ -27,4 +31,4 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
 
       - name: Build and test
-        run: ./gradlew build --no-daemon
+        run: ./gradlew build --no-daemon -PbootVersion=${{ matrix.bootVersion }}

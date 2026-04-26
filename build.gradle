@@ -7,6 +7,7 @@ plugins {
 // JitPack artifact: com.github.jpa-labs:jpa-field-constraints:TAG (see https://jitpack.io/#jpa-labs/jpa-field-constraints)
 // Java packages remain io.github.jpa_labs.jpafieldconstraints.*
 group = 'com.github.jpa-labs'
+def bootVersion = (findProperty('bootVersion') ?: '3.5.4').toString()
 
 def envVersion = System.getenv('VERSION')
 version = (envVersion != null && !envVersion.isBlank()) ? envVersion.trim() : '0.0.1-SNAPSHOT'
@@ -24,14 +25,14 @@ repositories {
 }
 
 dependencies {
-    implementation platform('org.springframework.boot:spring-boot-dependencies:3.5.4')
-
+    compileOnly platform("org.springframework.boot:spring-boot-dependencies:${bootVersion}")
     api 'jakarta.validation:jakarta.validation-api'
     api 'jakarta.persistence:jakarta.persistence-api'
 
-    implementation 'org.springframework:spring-context'
-    implementation 'org.springframework.boot:spring-boot-autoconfigure'
+    compileOnly 'org.springframework:spring-context'
+    compileOnly 'org.springframework.boot:spring-boot-autoconfigure'
 
+    testImplementation platform("org.springframework.boot:spring-boot-dependencies:${bootVersion}")
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.boot:spring-boot-starter-data-jpa'
     testImplementation 'org.springframework.boot:spring-boot-starter-validation'
@@ -64,7 +65,7 @@ publishing {
             pom {
                 name = 'jpa-field-constraints'
                 description =
-                    'JPA-backed Bean Validation @UniqueField / @UniqueFields for Spring Boot (runtime + optional annotation processor).'
+                    'JPA-backed Bean Validation constraints for Spring Boot (runtime + optional annotation processor).'
                 url = 'https://github.com/jpa-labs/jpa-field-constraints'
                 licenses {
                     license {
