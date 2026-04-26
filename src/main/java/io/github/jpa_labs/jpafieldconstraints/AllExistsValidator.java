@@ -79,7 +79,7 @@ class AllExistsValidator implements ConstraintValidator<AllExists, Object> {
   }
 
   private static String nullToEmpty(String s) {
-    return s == null ? "" : s;
+    return java.util.Objects.requireNonNullElse(s, "");
   }
 
   private boolean fail(ConstraintValidatorContext context) {

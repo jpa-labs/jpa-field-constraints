@@ -111,6 +111,13 @@ class AllExistsValidatorIntegrationTest {
     }
 
     @Test
+    void allowsAllBlankValuesWhenIgnoreNullOrEmptyEnabled() {
+      Set<ConstraintViolation<FieldListDto>> violations =
+          validator.validate(new FieldListDto(List.of("   ", "")));
+      assertThat(violations).isEmpty();
+    }
+
+    @Test
     void failsWhenEntityColumnPathHasInvalidMidSegmentType() {
       InvalidEntityPathListDto dto = new InvalidEntityPathListDto(List.of("x"));
       assertThatThrownBy(() -> validator.validate(dto))

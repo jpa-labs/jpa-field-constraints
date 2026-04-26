@@ -46,6 +46,12 @@ class UniqueFieldValidatorIntegrationTest {
       assertThat(violations).hasSize(1);
       assertThat(violations.iterator().next().getPropertyPath()).hasToString("code");
     }
+
+    @Test
+    void allowsBlankWhenIgnoreNullOrEmptyEnabled() {
+      Set<ConstraintViolation<SampleDto>> violations = validator.validate(new SampleDto("   "));
+      assertThat(violations).isEmpty();
+    }
   }
 
   @Nested

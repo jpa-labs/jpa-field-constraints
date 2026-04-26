@@ -48,7 +48,7 @@ class UniqueFieldValidator implements ConstraintValidator<UniqueField, Object> {
   }
 
   private static String nullToEmpty(String s) {
-    return s == null ? "" : s;
+    return java.util.Objects.requireNonNullElse(s, "");
   }
 
   @Override
